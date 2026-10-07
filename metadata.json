@@ -1,0 +1,6 @@
+{
+  "name": "Diaferastudio — Modern Dark Photography Studio",
+  "description": "Studio foto profesional dengan sistem reservasi slot cinema-style interaktif, approval instan via WhatsApp, portfolio showcase terfilter, dan Bento grid admin dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

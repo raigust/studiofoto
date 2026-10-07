@@ -1,0 +1,117 @@
+// This is your Prisma schema file for Diaferastudio
+// Designed for MySQL / PlanetScale / Upstash / Supabase
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  DP_PAID
+  PAID_FULL
+  REFUNDED
+}
+
+enum ServiceCategory {
+  wisuda
+  produk
+  pernikahan
+  event
+  portrait
+}
+
+model Booking {
+  id              String          @id @default(cuid())
+  bookingCode     String          @unique // e.g. DFS-202610-001
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  category        ServiceCategory
+  packageId       String
+  packageName     String
+  date            String          // YYYY-MM-DD
+  timeSlot        String          // e.g. 10:00 - 11:30 WIB
+  timeSlotId      String          // e.g. 10:00
+  numberOfPeople  Int             @default(1)
+  notes           String?         @db.Text
+  totalPrice      Int
+  dpAmount        Int
+  paymentStatus   PaymentStatus   @default(DP_PAID)
+  status          BookingStatus   @default(PENDING)
+  rejectionReason String?
+  whatsappNotified Boolean        @default(false)
+  approvedAt      DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([date])
+  @@index([status])
+  @@index([customerPhone])
+}
+
+model DaySchedule {
+  id                  String   @id @default(cuid())
+  date                String   @unique // YYYY-MM-DD
+  isClosed            Boolean  @default(false)
+  closeReason         String?
+  maxCapacity         Int      @default(5) // e.g. 1 for "Cukup 1 customer aja"
+  customNotes         String?
+  manuallyLockedSlots Json?    // Array of locked times e.g. ["10:00"]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model PortfolioItem {
+  id          String          @id @default(cuid())
+  title       String
+  category    ServiceCategory
+  clientName  String?
+  imageUrl    String          @db.Text
+  description String          @db.Text
+  tags        Json            // Array of strings
+  camera      String?
+  lens        String?
+  lighting    String?
+  date        String
+  featured    Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model AdminNotification {
+  id        String   @id @default(cuid())
+  type      String   // NEW_BOOKING, STATUS_CHANGE, etc.
+  title     String
+  message   String   @db.Text
+  read      Boolean  @default(false)
+  bookingId String?
+  createdAt DateTime @default(now())
+}
+
+model StudioSettings {
+  id                         String   @id @default("default")
+  studioName                 String   @default("Diaferastudio")
+  tagline                    String   @default("Artistic Minimalism & High-End Photography Studio")
+  whatsappNumber             String   @default("6281289004512")
+  email                      String   @default("contact@diaferastudio.id")
+  address                    String   @default("Jl. Ranggagading No. 14, Bandung, Jawa Barat")
+  bankName                   String   @default("BCA (Bank Central Asia)")
+  bankAccountNumber          String   @default("8720199421")
+  bankAccountHolder          String   @default("DIAFERASTUDIO KREATIF")
+  defaultMaxDailyCapacity    Int      @default(5)
+  autoCloseWhenQuotaReached  Boolean  @default(true)
+  updatedAt                  DateTime @updatedAt
+}
