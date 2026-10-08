@@ -63,7 +63,7 @@ export const CheckBookingModal: React.FC<CheckBookingModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
           <div className="flex items-center gap-2">
-            <Search className="w-4 h-4 text-orange-400" />
+            <Search className="w-4 h-4 text-blue-400" />
             <h3 className="text-base font-semibold text-white">
               Cek Status Reservasi Anda
             </h3>

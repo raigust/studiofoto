@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronRight } from 'lucide-react';
+import { Search, Calendar, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { sounds } from '../utils/storage';
 import { DiaferaLogo } from './DiaferaLogo';
@@ -20,7 +20,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [logoClicks, setLogoClicks] = useState(0);
 
-  // Secret shortcut: Ctrl+Shift+A or Alt+A
+  // Keyboard shortcut: Ctrl+Shift+A or Alt+A
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') || (e.altKey && e.key.toLowerCase() === 'a')) {
@@ -51,54 +51,60 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const navItems = [
     { id: 'home' as const, label: 'Beranda' },
-    { id: 'booking' as const, label: 'Reservasi Sesi' },
-    { id: 'portfolio' as const, label: 'Portofolio' },
-    { id: 'services' as const, label: 'Paket & Harga' },
+    { id: 'portfolio' as const, label: 'Karya' },
+    { id: 'services' as const, label: 'Paket & Tarif' },
+    { id: 'booking' as const, label: 'Jadwal & Slot' },
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 pt-3 pb-2 transition-all">
-      <div className="max-w-7xl mx-auto">
+    <header className="sticky top-3 sm:top-5 z-40 w-full px-4 sm:px-6 transition-all">
+      <div className="max-w-4xl mx-auto">
         <motion.div
-          initial={{ y: -20, opacity: 0 }}
+          initial={{ y: -15, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="relative flex items-center justify-between h-14 sm:h-16 px-4 sm:px-6 rounded-full bg-zinc-950/80 backdrop-blur-2xl border border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+          transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="relative flex items-center justify-between h-14 px-3 sm:px-4 rounded-full bg-[#111114]/90 backdrop-blur-2xl border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.6)]"
         >
-          {/* Brand Logo (Matching https://www.instagram.com/diaferastudio/) */}
+          {/* Brand Circular Logo (Matching https://www.instagram.com/diaferastudio/) */}
           <div className="flex items-center gap-3">
             <button
+              type="button"
               onClick={() => handleNavClick('home')}
-              className="flex items-center text-left focus:outline-none cursor-pointer"
+              className="flex items-center gap-2.5 text-left focus:outline-none cursor-pointer group"
             >
               <div
                 onClick={(e) => {
                   e.stopPropagation();
                   handleLogoSecretClick();
                 }}
-                title="Diafera Studio — Space"
+                title="Diaféra Studio — Space"
+                className="transition-transform group-hover:scale-105"
               >
-                <DiaferaLogo size="md" variant="horizontal" />
+                <DiaferaLogo size="sm" variant="badge" />
               </div>
+              <span className="font-sans font-bold text-sm tracking-tight text-white hidden sm:inline">
+                Diaféra
+              </span>
             </button>
           </div>
 
-          {/* Center Navigation Links (Floating Glass Pill Selector) */}
-          <nav className="hidden md:flex items-center gap-1 bg-white/[0.04] p-1 rounded-full border border-white/5">
+          {/* Center Navigation Links (Matching Video: Work, About, Explorations) */}
+          <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => handleNavClick(item.id)}
-                  className={`relative px-4 py-1.5 text-xs font-medium rounded-full transition-all duration-300 cursor-pointer ${
+                  className={`relative px-3.5 py-1.5 text-xs font-medium rounded-full transition-colors cursor-pointer ${
                     isActive ? 'text-white' : 'text-zinc-400 hover:text-white'
                   }`}
                 >
                   {isActive && (
                     <motion.div
                       layoutId="nav-active-pill"
-                      className="absolute inset-0 bg-white/10 rounded-full border border-white/15 shadow-sm"
+                      className="absolute inset-0 bg-white/10 rounded-full border border-white/10 shadow-sm"
                       transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                     />
                   )}
@@ -108,40 +114,42 @@ export const Navbar: React.FC<NavbarProps> = ({
             })}
           </nav>
 
-          {/* Right Actions: Instagram Link & Check Status */}
+          {/* Right Actions: Cek Booking + Primary CTA Button (Like 'Get it Free' in video) */}
           <div className="flex items-center gap-2">
-            <a
-              href="https://www.instagram.com/diaferastudio/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="p-2 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-zinc-300 hover:text-white transition-colors cursor-pointer"
-              title="Instagram @diaferastudio"
-            >
-              <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-              </svg>
-            </a>
-
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={onOpenCheckBooking}
-              className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/15 border border-white/15 text-zinc-200 hover:text-white text-xs font-medium transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                onOpenCheckBooking();
+              }}
+              className="px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+              title="Cek Status Booking Pelanggan"
             >
               <Search className="w-3.5 h-3.5 text-zinc-400" />
-              <span className="hidden sm:inline">Cek Status</span>
+              <span className="hidden sm:inline">Cek Booking</span>
+            </button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleNavClick('booking')}
+              className="px-4 py-1.5 sm:py-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors flex items-center gap-1.5 shadow-md shadow-blue-600/30 cursor-pointer"
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              <span>Reservasi</span>
             </motion.button>
 
-            {/* Mobile Menu Toggle Button */}
+            {/* Mobile Menu Button */}
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="md:hidden p-2 rounded-full bg-white/5 border border-white/10 text-zinc-300 hover:text-white"
+              aria-label="Toggle menu"
             >
-              <span className="sr-only">Buka menu</span>
-              <div className="w-4 h-3.5 flex flex-col justify-between">
-                <span className={`h-0.5 w-full bg-current transition-transform duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
+              <div className="w-4 h-3 flex flex-col justify-between">
+                <span className={`h-0.5 w-full bg-current transition-transform duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-1' : ''}`} />
                 <span className={`h-0.5 w-full bg-current transition-opacity duration-200 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
-                <span className={`h-0.5 w-full bg-current transition-transform duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`} />
+                <span className={`h-0.5 w-full bg-current transition-transform duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-1' : ''}`} />
               </div>
             </button>
           </div>
@@ -155,31 +163,30 @@ export const Navbar: React.FC<NavbarProps> = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.98 }}
               transition={{ duration: 0.2 }}
-              className="md:hidden mt-2 p-3 rounded-2xl bg-zinc-950/90 backdrop-blur-2xl border border-white/10 shadow-2xl space-y-1"
+              className="md:hidden mt-2 p-3 rounded-2xl bg-[#111114]/95 backdrop-blur-2xl border border-white/10 shadow-2xl space-y-1"
             >
               {navItems.map((item) => (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => handleNavClick(item.id)}
-                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors flex items-center justify-between ${
-                    activeTab === item.id ? 'bg-white/10 text-white font-semibold' : 'text-zinc-400 hover:text-white'
+                  className={`w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors ${
+                    activeTab === item.id ? 'bg-white/15 text-white font-bold' : 'text-zinc-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <span>{item.label}</span>
-                  {activeTab === item.id && <ChevronRight className="w-3.5 h-3.5 text-amber-400" />}
+                  {item.label}
                 </button>
               ))}
-              <div className="pt-2 border-t border-white/5">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    onOpenCheckBooking();
-                  }}
-                  className="w-full text-left px-3.5 py-2.5 rounded-xl text-xs text-zinc-300 flex items-center gap-2 hover:bg-white/5"
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between px-2">
+                <a
+                  href="https://www.instagram.com/diaferastudio/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5"
                 >
-                  <Search className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Cek Status Reservasi</span>
-                </button>
+                  <span>Instagram @diaferastudio</span>
+                  <ArrowUpRight className="w-3 h-3" />
+                </a>
               </div>
             </motion.div>
           )}

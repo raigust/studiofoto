@@ -125,7 +125,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-orange-500" />
+            <span className="w-2 h-2 rounded-full bg-blue-500" />
             <h3 className="text-base font-semibold text-white">
               {submittedBooking ? 'Reservasi Terkirim' : 'Form Booking Studio Diafera'}
             </h3>
@@ -141,12 +141,12 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
         {submittedBooking ? (
           /* SUCCESS STATE */
           <div className="p-6 sm:p-8 space-y-6 text-center">
-            <div className="w-16 h-16 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-400 mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(249,115,22,0.25)]">
+            <div className="w-16 h-16 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-400 mx-auto flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.25)]">
               <CheckCircle2 className="w-8 h-8" />
             </div>
 
             <div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-orange-400 block mb-1">
+              <span className="text-[10px] font-mono uppercase tracking-widest text-blue-400 block mb-1">
                 KODE BOOKING ANDA
               </span>
               <p className="text-2xl sm:text-3xl font-semibold font-mono text-white tracking-wide">
@@ -156,7 +156,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                 Pengajuan Sesi Telah Diterima!
               </h3>
               <p className="text-zinc-400 text-xs sm:text-sm max-w-md mx-auto mt-2 font-light leading-relaxed">
-                Slot Anda telah masuk ke sistem dan berstatus <strong className="text-orange-400 font-medium">Menunggu Approval Admin</strong>. 
+                Slot Anda telah masuk ke sistem dan berstatus <strong className="text-blue-400 font-medium">Menunggu Approval Admin</strong>. 
                 Pemberitahuan persetujuan resmi akan dikirim langsung ke WhatsApp Anda.
               </p>
             </div>
@@ -214,11 +214,11 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
             {/* Slot recap bar */}
             <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/10 text-xs flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-zinc-300">
-                <Calendar className="w-3.5 h-3.5 text-orange-400" />
+                <Calendar className="w-3.5 h-3.5 text-blue-400" />
                 <span className="font-medium text-white">{readableDate}</span>
               </div>
               <div className="flex items-center gap-2 font-mono text-zinc-300">
-                <Clock className="w-3.5 h-3.5 text-orange-400" />
+                <Clock className="w-3.5 h-3.5 text-blue-400" />
                 <span className="text-orange-300">{slot.label}</span>
               </div>
               <div className="text-zinc-200 font-medium">
@@ -230,7 +230,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5 sm:col-span-2">
                 <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-orange-400" />
+                  <User className="w-3.5 h-3.5 text-blue-400" />
                   <span>Nama Lengkap Pemesan *</span>
                 </label>
                 <input
@@ -249,7 +249,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
 
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-orange-400" />
+                  <Phone className="w-3.5 h-3.5 text-blue-400" />
                   <span>Nomor WhatsApp Aktif *</span>
                 </label>
                 <input
@@ -282,7 +282,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
 
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-orange-400" />
+                  <Users className="w-3.5 h-3.5 text-blue-400" />
                   <span>Jumlah Peserta / Model</span>
                 </label>
                 <input
@@ -318,7 +318,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
               </div>
               <div className="flex justify-between">
                 <div>
-                  <span className="font-medium text-orange-400">Komitmen DP (50%):</span>
+                  <span className="font-medium text-blue-400">Komitmen DP (50%):</span>
                   <p className="text-[11px] text-zinc-500 font-light">Ditransfer setelah admin mengkonfirmasi slot</p>
                 </div>
                 <span className="font-mono text-sm font-semibold text-white tabular-nums">
@@ -326,7 +326,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
                 </span>
               </div>
               <div className="pt-2 text-[11px] text-zinc-400 flex items-center gap-2 border-t border-white/5">
-                <CreditCard className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                <CreditCard className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                 <span>
                   Rekening Resmi: {studioSettings.bankName} - {studioSettings.bankAccountNumber} (a.n {studioSettings.bankAccountHolder})
                 </span>

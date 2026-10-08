@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Calendar as CalendarIcon,
   Clock,
   CheckCircle2,
   Lock,
@@ -8,9 +7,8 @@ import {
   AlertCircle,
   ChevronRight,
   ShieldAlert,
-  Sparkles,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import {
   Booking,
   DaySchedule,
@@ -78,7 +76,8 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
   }, [selectedPackageId]);
 
   const currentSelectedSlot = useMemo(() => {
-    return slots.find((s) => s.time === selectedSlotTime && s.status === 'available');
+    if (!selectedSlotTime) return null;
+    return slots.find((s) => s.time === selectedSlotTime && s.status === 'available') || null;
   }, [slots, selectedSlotTime]);
 
   const handleSelectSlot = (slot: TimeSlot) => {
@@ -94,7 +93,8 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
   };
 
   const readableSelectedDate = useMemo(() => {
-    const d = new Date(selectedDate);
+    const parts = selectedDate.split('-');
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
     return d.toLocaleDateString('id-ID', {
       weekday: 'long',
       day: 'numeric',
@@ -104,185 +104,149 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
   }, [selectedDate]);
 
   return (
-    <section id="booking" className="py-16 sm:py-24 relative overflow-hidden bg-[#070709] border-t border-white/5">
-      {/* Delicate background ambient spotlight */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[300px] bg-orange-500/5 blur-[140px] pointer-events-none rounded-full" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <section id="booking" className="py-20 sm:py-28 bg-[#0a0a0c] border-t border-white/10 relative">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         
         {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="max-w-2xl mb-12"
-        >
-          <div className="flex items-center gap-2 text-xs font-mono text-orange-400 mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-            <span>CINEMA-STYLE RESERVATION ENGINE</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-white tracking-tight">
-            Pilih Tanggal & Kursi Sesi Anda
-          </h2>
-          <p className="text-zinc-400 text-sm sm:text-base mt-2 font-light">
-            Transparansi penuh seperti di bioskop. Pilih slot yang masih kosong, 
-            pantau status terisi secara real-time, dan nikmati approval instan.
+        <div className="space-y-4 mb-12">
+          <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-400">
+            JADWAL & LIVE SLOT
           </p>
-        </motion.div>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <h2 className="text-3xl sm:text-5xl font-bold tracking-[-0.035em] text-white">
+                Pilih tanggal & slot sesi Anda.
+              </h2>
+              <p className="text-zinc-400 text-sm sm:text-base mt-2 max-w-xl font-normal">
+                Visual slot real-time. Pilih waktu yang tersedia untuk reservasi sesi studio privat Anda.
+              </p>
+            </div>
+          </div>
+        </div>
 
-        {/* 1. Date Selector Strip (Minimalist Glass Cards) */}
+        {/* 1. Date Selector Strip */}
         <div className="mb-10">
-          <div className="flex items-center justify-between mb-3.5 text-xs text-zinc-400">
-            <span className="font-medium text-zinc-300">1. Tentukan Tanggal Sesi</span>
-            <span className="font-mono text-zinc-500">12 Hari Ke Depan</span>
+          <div className="flex items-center justify-between mb-3 text-xs font-mono text-zinc-400">
+            <span>1. TENTUKAN TANGGAL SESI</span>
+            <span className="text-zinc-500">12 Hari Ke Depan</span>
           </div>
 
-          <div className="flex gap-2.5 overflow-x-auto pb-3 pt-1 scrollbar-none">
+          <div className="flex gap-2 overflow-x-auto pb-3 pt-1 scrollbar-none">
             {upcomingDays.map((item) => {
               const isSelected = selectedDate === item.dateString;
               const dateMeta = daySchedules[item.dateString];
               const isClosed = dateMeta?.isClosed;
-              const isCapacity1 = dateMeta?.maxCapacity === 1;
 
               return (
-                <motion.button
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
                   key={item.dateString}
+                  type="button"
                   onClick={() => {
                     sounds.playSeatClickSound();
                     setSelectedDate(item.dateString);
                     setSelectedSlotTime(null);
                   }}
-                  className={`flex flex-col items-center justify-between min-w-[80px] sm:min-w-[90px] h-24 p-3 rounded-2xl border transition-all cursor-pointer shrink-0 ${
+                  className={`flex flex-col items-center justify-between min-w-[76px] sm:min-w-[84px] h-20 p-2.5 rounded-2xl border transition-all cursor-pointer shrink-0 ${
                     isSelected
-                      ? 'bg-gradient-to-b from-white/15 to-white/5 border-white/30 text-white shadow-[0_4px_24px_rgba(255,255,255,0.08)]'
+                      ? 'bg-white text-black border-white shadow-md'
                       : isClosed
-                      ? 'bg-zinc-950/40 border-white/5 text-zinc-600 opacity-50'
-                      : 'bg-zinc-900/40 border-white/8 text-zinc-400 hover:text-white hover:border-white/20 hover:bg-zinc-900/60'
+                      ? 'bg-[#111114] border-white/5 text-zinc-600 opacity-40'
+                      : 'bg-[#121215] border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
                   }`}
                 >
-                  <span className="text-[10px] font-mono tracking-wider uppercase text-zinc-400">
+                  <span className={`text-[10px] font-mono uppercase tracking-wider ${isSelected ? 'text-zinc-600' : 'text-zinc-500'}`}>
                     {item.dayName}
                   </span>
-                  <span className={`text-xl font-semibold tabular-nums ${isSelected ? 'text-white' : 'text-zinc-200'}`}>
+                  <span className={`text-xl font-bold tabular-nums ${isSelected ? 'text-black' : 'text-white'}`}>
                     {item.dayNumber}
                   </span>
-                  <div className="w-full">
-                    {isClosed ? (
-                      <span className="text-[10px] text-rose-400 font-mono block truncate">Tutup</span>
-                    ) : isCapacity1 ? (
-                      <span className="text-[10px] text-orange-400 font-mono block truncate">Eksklusif</span>
-                    ) : (
-                      <span className="text-[10px] text-zinc-500 font-mono block truncate uppercase">
-                        {item.monthName}
-                      </span>
-                    )}
-                  </div>
-                </motion.button>
+                  <span className={`text-[10px] font-mono uppercase ${isSelected ? 'text-zinc-700' : 'text-zinc-500'}`}>
+                    {isClosed ? 'Tutup' : item.monthName}
+                  </span>
+                </button>
               );
             })}
           </div>
         </div>
 
-        {/* 2. Package Selector (Apple Minimalist Glass Cards) */}
-        <div className="mb-10 p-5 sm:p-6 rounded-3xl bg-zinc-950/60 border border-white/8 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-4 text-xs text-zinc-400">
-            <span className="font-medium text-zinc-300">2. Pilih Layanan Sesi Foto</span>
-            <span className="text-orange-400 font-mono">DP: 50%</span>
+        {/* 2. Package Selector */}
+        <div className="mb-10 p-5 sm:p-6 rounded-3xl bg-[#121215] border border-white/10">
+          <div className="flex items-center justify-between mb-4 text-xs font-mono text-zinc-400">
+            <span>2. PILIH PAKET SESI</span>
+            <span className="text-zinc-500">DP 50%</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
             {SERVICE_PACKAGES.map((pkg) => {
               const isSelected = selectedPackageId === pkg.id;
               return (
-                <motion.button
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.99 }}
+                <button
                   key={pkg.id}
+                  type="button"
                   onClick={() => {
                     sounds.playSeatClickSound();
                     setSelectedPackageId(pkg.id);
                   }}
-                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
+                  className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
                     isSelected
-                      ? 'bg-white/[0.08] border-orange-500/60 shadow-[0_0_24px_rgba(249,115,22,0.15)] ring-1 ring-orange-500/30'
-                      : 'bg-zinc-900/30 border-white/5 hover:border-white/15 text-zinc-300 hover:bg-zinc-900/50'
+                      ? 'bg-white/15 border-white text-white shadow-sm'
+                      : 'bg-[#0e0e11] border-white/5 hover:border-white/15 text-zinc-300'
                   }`}
                 >
-                  <p className="text-[10px] font-mono uppercase tracking-wider text-orange-400/90 font-medium">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-zinc-400">
                     {pkg.category}
                   </p>
-                  <p className={`text-sm font-semibold mt-1 leading-snug line-clamp-1 ${isSelected ? 'text-white' : 'text-zinc-200'}`}>
+                  <p className="text-xs font-bold text-white mt-1 leading-snug line-clamp-1">
                     {pkg.name}
                   </p>
-                  <p className="text-xs font-mono font-bold text-white mt-2 tabular-nums">
+                  <p className="text-xs font-mono font-semibold text-white mt-2 tabular-nums">
                     Rp {pkg.price.toLocaleString('id-ID')}
                   </p>
-                  <p className="text-[11px] text-zinc-500 mt-0.5 font-light">
-                    {pkg.durationMinutes} mnt &bull; maks {pkg.maxPeople} org
-                  </p>
-                </motion.button>
+                </button>
               );
             })}
           </div>
         </div>
 
-        {/* 3. The Cinema Theater Curve & Glass Seat Grid */}
-        <div className="rounded-3xl bg-zinc-950/80 border border-white/10 p-6 sm:p-10 relative overflow-hidden backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+        {/* 3. Cinema Theater Screen & Slot Grid */}
+        <div className="rounded-3xl bg-[#111114] border border-white/10 p-6 sm:p-8 relative overflow-hidden shadow-2xl">
           
-          {/* Curved Cinema Screen Representation */}
-          <div className="relative max-w-xl mx-auto mb-10 text-center">
-            {/* Luminous light spill */}
-            <div className="w-3/4 h-12 mx-auto bg-gradient-to-b from-white/15 via-white/5 to-transparent blur-xl pointer-events-none" />
-            
-            <div className="relative">
-              <div className="h-1.5 w-full bg-gradient-to-r from-transparent via-white/80 to-transparent rounded-full shadow-[0_0_20px_rgba(255,255,255,0.4)]" />
-            </div>
-
-            <p className="text-[10px] font-mono tracking-widest uppercase text-zinc-400 mt-3">
-              &bull; STUDIO BACKDROP & FLOATING LIGHTING RIG &bull;
-            </p>
-            <p className="text-xs text-zinc-500 mt-0.5 font-light">
-              Area pemotretan privat terfokus ke arah sini
+          {/* Subtle Stage Bar */}
+          <div className="relative max-w-md mx-auto mb-8 text-center">
+            <div className="h-1 w-full bg-gradient-to-r from-transparent via-white/50 to-transparent rounded-full shadow-[0_0_12px_rgba(255,255,255,0.3)]" />
+            <p className="text-[10px] font-mono tracking-widest uppercase text-zinc-400 mt-2.5">
+              RUANG PEMOTRETAN PRIVAT DIAFÉRA
             </p>
           </div>
 
-          {/* Admin Schedule Alerts (Closed / 1 Customer Limit) */}
+          {/* Admin Schedule Alerts */}
           {dayInfo.isClosed ? (
-            <div className="mb-8 p-4 rounded-2xl bg-rose-950/30 border border-rose-800/40 text-rose-200 flex items-start gap-3">
+            <div className="mb-6 p-4 rounded-2xl bg-rose-950/20 border border-rose-800/40 text-rose-200 flex items-start gap-3">
               <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-rose-300">Studio Ditutup oleh Admin pada Tanggal Ini</p>
-                <p className="text-xs text-rose-300/80 mt-0.5 font-light">
-                  {dayInfo.closeReason || 'Jadwal hari ini sedang dinonaktifkan untuk agenda khusus/pemeliharaan studio.'}
+                <p className="text-xs font-semibold text-rose-300">Studio Ditutup oleh Admin pada Tanggal Ini</p>
+                <p className="text-xs text-rose-300/80 mt-0.5">
+                  {dayInfo.closeReason || 'Jadwal hari ini sedang dinonaktifkan untuk agenda khusus studio.'}
                 </p>
               </div>
             </div>
           ) : dayInfo.maxCapacity > 0 && activeApprovedCount >= dayInfo.maxCapacity ? (
-            <div className="mb-8 p-4 rounded-2xl bg-orange-950/30 border border-orange-800/40 text-orange-200 flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
+            <div className="mb-6 p-4 rounded-2xl bg-amber-950/20 border border-amber-800/40 text-amber-200 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-orange-300">
+                <p className="text-xs font-semibold text-amber-300">
                   Batas Kuota Eksklusif Terpenuhi ({activeApprovedCount}/{dayInfo.maxCapacity} Customer)
                 </p>
-                <p className="text-xs text-orange-300/80 mt-0.5 font-light">
-                  Admin membatasi hari ini hanya untuk 1 customer prioritas. Sisa slot terkunci demi privasi penuh.
+                <p className="text-xs text-amber-300/80 mt-0.5">
+                  Hari ini telah terisi penuh demi menjaga privasi dan ketenangan sesi.
                 </p>
               </div>
             </div>
           ) : null}
 
-          {/* Cinema Seats/Slots Grid */}
+          {/* Slots Grid */}
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-6">
-              <span className="text-xs font-mono text-zinc-400">
-                Jadwal Hari: <span className="text-white font-medium">{readableSelectedDate}</span>
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               {slots.map((slot) => {
                 const isSelected = selectedSlotTime === slot.time && slot.status === 'available';
                 const isAvailable = slot.status === 'available';
@@ -291,33 +255,29 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
                 const isBlocked = slot.status === 'blocked';
 
                 return (
-                  <motion.div
-                    whileHover={isAvailable ? { y: -2 } : {}}
-                    whileTap={isAvailable ? { scale: 0.98 } : {}}
+                  <div
                     key={slot.id}
                     onClick={() => isAvailable && handleSelectSlot(slot)}
                     className={`relative rounded-2xl border p-4 transition-all flex flex-col justify-between select-none ${
                       isAvailable
                         ? isSelected
-                          ? 'bg-gradient-to-br from-orange-500 to-amber-500 text-black border-transparent shadow-[0_8px_32px_rgba(249,115,22,0.35)] cursor-pointer'
-                          : 'bg-zinc-900/50 border-white/8 hover:border-white/20 hover:bg-zinc-900/80 text-zinc-200 cursor-pointer shadow-sm'
+                          ? 'bg-blue-600 text-white border-blue-500 shadow-md cursor-pointer'
+                          : 'bg-[#15151a] border-white/10 hover:border-white/20 text-zinc-200 cursor-pointer'
                         : isBooked
-                        ? 'bg-zinc-950/70 border-white/5 text-zinc-600 cursor-not-allowed opacity-75'
+                        ? 'bg-[#0f0f12] border-white/5 text-zinc-600 cursor-not-allowed opacity-60'
                         : isPending
-                        ? 'bg-zinc-950/70 border-amber-500/20 text-amber-400/80 cursor-not-allowed opacity-85'
-                        : 'bg-zinc-950/50 border-white/5 text-zinc-600 cursor-not-allowed opacity-50'
+                        ? 'bg-[#0f0f12] border-amber-500/20 text-amber-400/80 cursor-not-allowed opacity-75'
+                        : 'bg-[#0f0f12] border-white/5 text-zinc-600 cursor-not-allowed opacity-40'
                     }`}
                   >
-                    {/* Period header */}
-                    <div className="flex items-center justify-between text-[11px] font-mono uppercase mb-2">
-                      <span className={isSelected ? 'text-black/80 font-semibold' : 'text-zinc-500'}>
+                    <div className="flex items-center justify-between text-[11px] font-mono uppercase mb-1.5">
+                      <span className={isSelected ? 'text-blue-100 font-semibold' : 'text-zinc-500'}>
                         {slot.period}
                       </span>
 
-                      {/* Status Indicator */}
                       {isAvailable && (
                         isSelected ? (
-                          <span className="flex items-center gap-1 font-bold text-black text-[10px]">
+                          <span className="flex items-center gap-1 font-bold text-white text-[10px]">
                             <CheckCircle2 className="w-3.5 h-3.5" />
                             DIPILIH
                           </span>
@@ -330,148 +290,125 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
                       )}
 
                       {isBooked && (
-                        <span className="flex items-center gap-1 text-rose-400 font-medium text-[10px]">
+                        <span className="flex items-center gap-1 text-rose-400 text-[10px]">
                           <Lock className="w-3 h-3" />
                           TERISI
                         </span>
                       )}
 
                       {isPending && (
-                        <span className="flex items-center gap-1 text-amber-300 text-[10px]">
+                        <span className="flex items-center gap-1 text-amber-400 text-[10px]">
                           <Hourglass className="w-3 h-3 animate-spin" />
-                          MENUNGGU
+                          REVIEW
                         </span>
                       )}
 
                       {isBlocked && (
-                        <span className="flex items-center gap-1 text-zinc-500 text-[10px]">
-                          <Lock className="w-3 h-3" />
+                        <span className="text-zinc-600 text-[10px]">
                           DITUTUP
                         </span>
                       )}
                     </div>
 
-                    {/* Time Display */}
-                    <div className="py-2">
+                    <div className="py-1">
                       <div className="flex items-baseline gap-2">
-                        <Clock className={`w-4 h-4 ${isSelected ? 'text-black' : isAvailable ? 'text-zinc-400' : 'text-zinc-600'}`} />
-                        <span className={`text-lg font-bold font-mono tabular-nums ${isSelected ? 'text-black' : isAvailable ? 'text-white' : 'text-zinc-500'}`}>
+                        <Clock className={`w-3.5 h-3.5 ${isSelected ? 'text-white' : 'text-zinc-400'}`} />
+                        <span className={`text-lg font-bold font-mono tabular-nums ${isSelected ? 'text-white' : 'text-zinc-200'}`}>
                           {slot.time}
                         </span>
-                        <span className={`text-xs ${isSelected ? 'text-black/80 font-mono' : 'text-zinc-500'}`}>
+                        <span className={`text-xs ${isSelected ? 'text-blue-100' : 'text-zinc-500'}`}>
                           s/d {slot.endTime}
                         </span>
                       </div>
                     </div>
 
-                    {/* Meta info */}
-                    <div className={`pt-2 border-t text-[11px] ${isSelected ? 'border-black/20 text-black/80 font-medium' : 'border-white/5 text-zinc-500'}`}>
-                      {isBooked && (
-                        <span className="text-zinc-400 block truncate">
-                          Sesi: {slot.packageName || 'Terkonfirmasi'}
-                        </span>
-                      )}
-                      {isPending && (
-                        <span className="text-amber-300/80 block truncate">
-                          Review Antrean Admin
-                        </span>
-                      )}
-                      {isBlocked && (
-                        <span className="text-zinc-500 block truncate" title={slot.blockReason}>
-                          {slot.blockReason || 'Nonaktif Studio'}
-                        </span>
-                      )}
-                      {isAvailable && (
-                        <span className={isSelected ? 'text-black font-semibold' : 'text-zinc-400'}>
-                          {isSelected ? '✓ Siap Dikonfirmasi' : 'Klik untuk memilih'}
-                        </span>
+                    <div className={`pt-2 border-t text-[11px] ${isSelected ? 'border-blue-400/30 text-blue-100' : 'border-white/5 text-zinc-500'}`}>
+                      {isBooked ? (
+                        <span>Slot Telah Dibooking</span>
+                      ) : isPending ? (
+                        <span>Menunggu Konfirmasi</span>
+                      ) : isBlocked ? (
+                        <span>{slot.blockReason || 'Jadwal Ditutup'}</span>
+                      ) : (
+                        <span>{isSelected ? '✓ Terpilih' : 'Klik untuk memilih'}</span>
                       )}
                     </div>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
 
-            {/* Cinema Legend Bar */}
-            <div className="mt-8 pt-6 border-t border-white/5 flex flex-wrap items-center justify-center gap-6 text-xs text-zinc-400 font-mono">
+            {/* Legend */}
+            <div className="mt-8 pt-5 border-t border-white/5 flex flex-wrap items-center justify-center gap-6 text-xs text-zinc-400 font-mono">
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-zinc-800 border border-white/20" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
                 <span>Tersedia</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-600" />
                 <span>Dipilih</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-zinc-900 border border-rose-500/40 text-rose-400" />
-                <span>Terisi (Booked)</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500" />
+                <span>Terisi</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-amber-500/20 border border-amber-500" />
-                <span>Menunggu Approval</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-full bg-zinc-950 border border-zinc-800" />
-                <span>Ditutup Admin</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+                <span>Ditutup</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* 4. Bottom Selection Floating Bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-8 rounded-2xl bg-zinc-950/70 border border-white/10 p-4 sm:p-6 backdrop-blur-2xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4"
-        >
-          <div className="flex flex-wrap items-center gap-4 sm:gap-8 w-full md:w-auto">
+        <div className="mt-6 rounded-2xl bg-[#121215] border border-white/10 p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-6 w-full md:w-auto">
             <div>
               <p className="text-[10px] font-mono text-zinc-500 uppercase">Jadwal Sesi:</p>
-              <p className="text-sm sm:text-base font-semibold text-white">
+              <p className="text-xs sm:text-sm font-semibold text-white">
                 {currentSelectedSlot ? (
                   <span>
-                    {readableSelectedDate} &bull; <span className="text-orange-400 font-mono">{currentSelectedSlot.label}</span>
+                    {readableSelectedDate} &bull; <span className="text-blue-400 font-mono">{currentSelectedSlot.label}</span>
                   </span>
                 ) : (
-                  <span className="text-zinc-500 font-normal">Pilih kursi slot di atas</span>
+                  <span className="text-zinc-500 font-normal">Pilih slot waktu di atas</span>
                 )}
               </p>
             </div>
 
-            <div className="hidden sm:block h-8 w-px bg-white/10" />
+            <div className="hidden sm:block h-6 w-px bg-white/10" />
 
             <div>
               <p className="text-[10px] font-mono text-zinc-500 uppercase">Layanan:</p>
-              <p className="text-sm sm:text-base font-medium text-zinc-200">
+              <p className="text-xs sm:text-sm font-medium text-zinc-200">
                 {selectedPackage.name}
               </p>
             </div>
 
-            <div className="hidden sm:block h-8 w-px bg-white/10" />
+            <div className="hidden sm:block h-6 w-px bg-white/10" />
 
             <div>
               <p className="text-[10px] font-mono text-zinc-500 uppercase">Total Biaya:</p>
-              <p className="text-sm sm:text-base font-bold font-mono text-white tabular-nums">
+              <p className="text-xs sm:text-sm font-bold font-mono text-white tabular-nums">
                 Rp {selectedPackage.price.toLocaleString('id-ID')}
               </p>
             </div>
           </div>
 
-          <motion.button
-            whileHover={currentSelectedSlot ? { scale: 1.02 } : {}}
-            whileTap={currentSelectedSlot ? { scale: 0.98 } : {}}
+          <button
+            type="button"
             disabled={!currentSelectedSlot}
             onClick={handleProceed}
-            className={`w-full md:w-auto px-7 py-3 rounded-full text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            className={`w-full md:w-auto px-6 py-2.5 rounded-full text-xs font-semibold tracking-wide transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md ${
               currentSelectedSlot
-                ? 'bg-white hover:bg-zinc-200 text-black shadow-[0_8px_24px_rgba(255,255,255,0.2)]'
-                : 'bg-white/5 text-zinc-500 cursor-not-allowed border border-white/5'
+                ? 'bg-white hover:bg-zinc-200 text-black'
+                : 'bg-white/5 text-zinc-600 cursor-not-allowed border border-white/5'
             }`}
           >
-            <span>Lanjut ke Form Booking</span>
+            <span>Isi Data Reservasi</span>
             <ChevronRight className="w-4 h-4" />
-          </motion.button>
-        </motion.div>
+          </button>
+        </div>
 
       </div>
     </section>

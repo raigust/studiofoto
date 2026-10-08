@@ -3,7 +3,6 @@ import {
   Search,
   Camera,
   X,
-  ExternalLink,
   ArrowUpRight,
   Sparkles,
   ImageIcon,
@@ -39,10 +38,10 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
   const categories: { id: string; label: string }[] = [
     { id: 'all', label: 'Semua Karya' },
     { id: 'wisuda', label: 'Wisuda' },
-    { id: 'produk', label: 'Produk' },
+    { id: 'produk', label: 'Produk & Brand' },
     { id: 'pernikahan', label: 'Pernikahan & Prewed' },
+    { id: 'portrait', label: 'Personal Portrait' },
     { id: 'event', label: 'Event Khusus' },
-    { id: 'portrait', label: 'Portrait' },
   ];
 
   const filteredItems = useMemo(() => {
@@ -55,9 +54,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
         item.title.toLowerCase().includes(query) ||
         item.description.toLowerCase().includes(query) ||
         (item.clientName && item.clientName.toLowerCase().includes(query)) ||
-        item.tags.some((t) => t.toLowerCase().includes(query)) ||
-        (item.gearInfo?.camera && item.gearInfo.camera.toLowerCase().includes(query)) ||
-        (item.gearInfo?.lighting && item.gearInfo.lighting.toLowerCase().includes(query));
+        item.tags.some((t) => t.toLowerCase().includes(query));
 
       return matchesCategory && matchesQuery;
     });
@@ -96,128 +93,116 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
   };
 
   return (
-    <section id="portfolio" className="py-16 sm:py-24 bg-[#070709] relative border-t border-white/5">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="portfolio" className="py-16 sm:py-24 bg-[#0a0a0c] border-t border-white/10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
         
-        {/* Header & Section Title */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="max-w-xl"
-          >
-            <div className="flex items-center gap-2 text-xs font-mono text-orange-400 mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
-              <span>SELECTED MASTERPIECES</span>
+        {/* Section Header (Matching 'SELECTED WORK' in video at 00:05) */}
+        <div className="space-y-4 mb-10">
+          <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-400">
+            SELECTED WORK
+          </p>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+              <h2 className="text-3xl sm:text-5xl font-bold tracking-[-0.03em] text-white">
+                Koleksi sesi foto terbaru.
+              </h2>
+              <p className="text-zinc-400 text-sm sm:text-base mt-2 max-w-xl font-normal">
+                Pencahayaan presisi, gradasi natural, dan momen yang bercerita.
+              </p>
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-white tracking-tight">
-              Galeri & Kurasi Visual
-            </h2>
-            <p className="text-zinc-400 text-sm sm:text-base mt-2 font-light">
-              Sentuhan estetika fine-art dengan arahan lighting presisi.
-              Temukan inspirasi konsep pemotretan Anda di bawah ini.
-            </p>
-          </motion.div>
 
-          {/* Search Pill Input */}
-          <div className="relative w-full md:w-72">
-            <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Cari konsep, klien, lensa..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-8 py-2.5 rounded-full bg-white/[0.04] border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 focus:bg-white/[0.08] transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
+            {/* Subtle Search Pill */}
+            <div className="relative w-full md:w-64">
+              <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="Cari konsep foto..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-8 py-2 rounded-full bg-white/5 border border-white/10 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-white/30 transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Category Pill Filters (Apple Segmented Glass Control) */}
-        <div className="flex items-center gap-1.5 p-1 rounded-full bg-white/[0.03] border border-white/8 w-max max-w-full overflow-x-auto mb-10 scrollbar-none">
+        {/* Clean Filter Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-8 scrollbar-none">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat.id;
             return (
               <button
                 key={cat.id}
+                type="button"
                 onClick={() => {
                   sounds.playSeatClickSound();
                   setSelectedCategory(cat.id);
                 }}
-                className={`relative px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-300 cursor-pointer whitespace-nowrap ${
-                  isActive ? 'text-white' : 'text-zinc-400 hover:text-white'
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer whitespace-nowrap ${
+                  isActive
+                    ? 'bg-white text-black font-semibold'
+                    : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10'
                 }`}
               >
-                {isActive && (
-                  <motion.div
-                    layoutId="portfolio-filter-pill"
-                    className="absolute inset-0 bg-white/15 rounded-full border border-white/10 shadow-sm"
-                    transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                  />
-                )}
-                <span className="relative z-10">{cat.label}</span>
+                {cat.label}
               </button>
             );
           })}
         </div>
 
-        {/* Portfolio Masonry Grid */}
+        {/* Showcase Cards (Matching full-bleed cards in video 00:05 - 00:08) */}
         {filteredItems.length === 0 ? (
-          <div className="p-16 text-center rounded-3xl border border-white/5 bg-zinc-950/40">
+          <div className="p-16 text-center rounded-3xl border border-white/10 bg-[#111114]">
             <Camera className="w-8 h-8 text-zinc-600 mx-auto mb-3" />
-            <h3 className="text-sm font-medium text-zinc-300">Tidak ada karya yang sesuai filter</h3>
-            <p className="text-xs text-zinc-500 mt-1">Coba gunakan kata kunci lain atau reset filter.</p>
+            <h3 className="text-sm font-medium text-zinc-300">Tidak ada karya yang sesuai</h3>
+            <p className="text-xs text-zinc-500 mt-1">Coba pilih kategori lain atau reset kata kunci pencarian.</p>
             <button
+              type="button"
               onClick={() => {
                 setSelectedCategory('all');
                 setSearchQuery('');
               }}
-              className="mt-4 px-4 py-2 rounded-full bg-white/10 text-xs text-white hover:bg-white/15 transition-colors"
+              className="mt-4 px-4 py-2 rounded-full bg-white/10 text-xs text-white hover:bg-white/15 transition-colors cursor-pointer"
             >
               Reset Filter
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredItems.map((item, index) => {
-              const isLarge = index === 0;
-
-              return (
-                <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.05 }}
-                  whileHover={{ y: -4 }}
-                  key={item.id}
-                  onClick={() => openLightbox(item)}
-                  className={`group relative rounded-3xl overflow-hidden border border-white/10 bg-zinc-950 cursor-pointer transition-all shadow-[0_12px_40px_rgba(0,0,0,0.4)] ${
-                    isLarge ? 'sm:col-span-2 lg:col-span-2 aspect-[16/10]' : 'aspect-[4/3]'
-                  }`}
-                >
+          <div className="space-y-8">
+            {filteredItems.map((item, index) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.05 }}
+                onClick={() => openLightbox(item)}
+                className="group relative rounded-3xl overflow-hidden border border-white/10 bg-[#121215] cursor-pointer shadow-xl transition-all duration-300 hover:border-white/25"
+              >
+                {/* Image Container */}
+                <div className="aspect-[16/10] sm:aspect-[21/10] w-full bg-black overflow-hidden relative">
                   <img
                     src={item.imageUrl}
                     alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                     referrerPolicy="no-referrer"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
 
-                  {/* Top-right inspect indicator */}
-                  <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/15 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  {/* Top-right View indicator */}
+                  <div className="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/60 backdrop-blur-md border border-white/15 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ArrowUpRight className="w-4 h-4" />
                   </div>
 
-                  {/* Top-left Quick Edit for Admin */}
+                  {/* Top-left Quick Edit for Admin or User Link update */}
                   {isAdmin && (
                     <div
                       onClick={(e) => {
@@ -225,50 +210,40 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                         openLightbox(item);
                         setIsEditingPhotoUrl(true);
                       }}
-                      className="absolute top-4 left-4 z-10 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white text-[10px] font-mono font-medium flex items-center gap-1 shadow-md hover:bg-lime-400 hover:text-black transition-colors"
+                      className="absolute top-4 left-4 z-10 px-3 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white text-[10px] font-mono font-medium flex items-center gap-1.5 shadow-md hover:bg-lime-400 hover:text-black transition-colors"
                       title="Ganti URL Foto (Instagram / Web)"
                     >
                       <ImageIcon className="w-3 h-3 text-lime-400" />
                       <span>Ganti Link Foto</span>
                     </div>
                   )}
+                </div>
 
-                  {/* Bottom details */}
-                  <div className="absolute bottom-0 inset-x-0 p-5 sm:p-6 text-white space-y-1">
-                    <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400">
-                      <span className="uppercase text-orange-400">{item.category}</span>
-                      {item.clientName && (
-                        <>
-                          <span>&bull;</span>
-                          <span className="text-zinc-300">{item.clientName}</span>
-                        </>
-                      )}
-                    </div>
-
-                    <h3 className="text-lg sm:text-xl font-medium tracking-tight text-white group-hover:text-zinc-200 transition-colors">
+                {/* Bottom Meta Bar (Matching Video Bar format: Title on Left, Year & Category on Right) */}
+                <div className="p-5 sm:p-6 bg-[#111114] flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-t border-white/5">
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-zinc-200 transition-colors">
                       {item.title}
                     </h3>
-
-                    <p className="text-xs text-zinc-400 line-clamp-2 max-w-lg font-light">
+                    <p className="text-xs text-zinc-400 font-light mt-0.5 line-clamp-1">
                       {item.description}
                     </p>
-
-                    {item.gearInfo?.lighting && (
-                      <p className="text-[10px] font-mono text-zinc-500 pt-1 flex items-center gap-1.5 truncate">
-                        <Sparkles className="w-3 h-3 text-orange-400 shrink-0" />
-                        <span>Setup: {item.gearInfo.lighting}</span>
-                      </p>
-                    )}
                   </div>
-                </motion.div>
-              );
-            })}
+
+                  <div className="flex items-center gap-2 text-xs font-mono text-zinc-400 shrink-0">
+                    <span className="text-zinc-500">2026</span>
+                    <span>&bull;</span>
+                    <span className="uppercase text-zinc-300 font-semibold">{item.category}</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         )}
 
       </div>
 
-      {/* Lightbox High-Resolution Apple-Style Modal */}
+      {/* Lightbox Modal with Instagram/Web Photo URL Replacement */}
       <AnimatePresence>
         {activeLightboxItem && (
           <motion.div
@@ -282,17 +257,18 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-              className="relative w-full max-w-4xl rounded-3xl bg-zinc-950/90 border border-white/15 shadow-2xl overflow-hidden my-6 max-h-[90vh] flex flex-col"
+              className="relative w-full max-w-4xl rounded-3xl bg-[#111114] border border-white/15 shadow-2xl overflow-hidden my-6 max-h-[90vh] flex flex-col"
             >
               {/* Modal Bar */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
                 <div className="flex items-center gap-2 text-xs font-mono text-zinc-400">
-                  <span className="w-2 h-2 rounded-full bg-orange-500" />
+                  <span className="w-2 h-2 rounded-full bg-blue-500" />
                   <span className="uppercase">{activeLightboxItem.category} &bull; SHOWCASE</span>
                 </div>
                 <button
+                  type="button"
                   onClick={closeLightbox}
-                  className="p-1.5 rounded-full bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white transition-colors"
+                  className="p-1.5 rounded-full bg-white/5 hover:bg-white/15 text-zinc-300 hover:text-white transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -311,25 +287,25 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
                   <div className="md:col-span-2 space-y-2">
-                    <h3 className="text-2xl font-semibold text-white">
+                    <h3 className="text-2xl font-bold text-white tracking-tight">
                       {activeLightboxItem.title}
                     </h3>
-                    <p className="text-sm text-zinc-300 leading-relaxed font-light">
+                    <p className="text-sm text-zinc-300 leading-relaxed font-normal">
                       {activeLightboxItem.description}
                     </p>
                     
                     <div className="flex flex-wrap items-center gap-1.5 pt-2 text-xs">
                       {activeLightboxItem.tags.map((t, idx) => (
-                        <span key={idx} className="bg-white/5 border border-white/8 px-2.5 py-1 rounded-full text-zinc-400">
+                        <span key={idx} className="bg-white/5 border border-white/10 px-2.5 py-1 rounded-full text-zinc-400">
                           #{t}
                         </span>
                       ))}
                     </div>
                   </div>
 
-                  {/* Technical Specs */}
+                  {/* Technical Specs & Actions */}
                   <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-4 text-xs space-y-2.5">
-                    <p className="font-mono text-[10px] uppercase tracking-wider text-orange-400 font-medium">
+                    <p className="font-mono text-[10px] uppercase tracking-wider text-zinc-400 font-medium">
                       Studio Technical Specs
                     </p>
                     {activeLightboxItem.clientName && (
@@ -347,12 +323,13 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                     {activeLightboxItem.gearInfo?.lighting && (
                       <div className="border-b border-white/5 pb-1.5">
                         <span className="text-zinc-500 block text-[10px]">Lighting:</span>
-                        <span className="font-medium text-orange-300">{activeLightboxItem.gearInfo.lighting}</span>
+                        <span className="font-medium text-zinc-300">{activeLightboxItem.gearInfo.lighting}</span>
                       </div>
                     )}
 
                     <div className="pt-2 space-y-2">
                       <button
+                        type="button"
                         onClick={() => {
                           const cat = activeLightboxItem.category;
                           closeLightbox();
@@ -362,7 +339,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                         }}
                         className="w-full py-2.5 rounded-full bg-white hover:bg-zinc-200 text-black font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
                       >
-                        <span>Booking Sesi Serupa</span>
+                        <span>Reservasi Sesi Serupa</span>
                         <ArrowUpRight className="w-3.5 h-3.5" />
                       </button>
 
@@ -375,7 +352,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                         }}
                         className="w-full py-2 px-3 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 text-white font-medium text-[11px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                       >
-                        <ImageIcon className="w-3.5 h-3.5 text-lime-400" />
+                        <ImageIcon className="w-3.5 h-3.5 text-blue-400" />
                         <span>Ganti Link Foto (Instagram / URL)</span>
                       </button>
                     </div>
@@ -388,7 +365,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                       >
                         <div className="flex items-center justify-between">
                           <span className="font-bold text-white flex items-center gap-1.5 text-[11px]">
-                            <LinkIcon className="w-3 h-3 text-lime-400" />
+                            <LinkIcon className="w-3 h-3 text-blue-400" />
                             <span>Link Foto Instagram / Web</span>
                           </span>
                           <button
@@ -408,7 +385,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                           value={newPhotoUrlInput}
                           onChange={(e) => setNewPhotoUrlInput(e.target.value)}
                           placeholder="https://..."
-                          className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/20 text-white font-mono text-[11px] focus:outline-none focus:border-lime-400"
+                          className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/20 text-white font-mono text-[11px] focus:outline-none focus:border-blue-400"
                         />
                         {photoUpdateSuccess ? (
                           <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 text-[11px] font-medium flex items-center gap-1.5">
@@ -426,7 +403,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                             </button>
                             <button
                               type="submit"
-                              className="px-3.5 py-1.5 rounded-full bg-lime-300 hover:bg-lime-200 text-zinc-950 font-bold text-[11px] shadow-sm flex items-center gap-1.5 cursor-pointer"
+                              className="px-3.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] shadow-sm flex items-center gap-1.5 cursor-pointer"
                             >
                               <Check className="w-3 h-3" />
                               <span>Simpan Foto</span>

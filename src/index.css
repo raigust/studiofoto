@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
 html {
   scroll-behavior: smooth;
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  background-color: #070709;
+  font-family: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+  background-color: #0a0a0c;
   color: #f4f4f6;
   color-scheme: dark;
+  letter-spacing: -0.01em;
 }
 
 /* Subtle Apple Ambient Glows & Mesh */
@@ -56,4 +56,15 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
+}
+
+.text-outline-huge {
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.16);
+  color: transparent;
+  user-select: none;
+  transition: -webkit-text-stroke 0.3s ease;
+}
+
+.text-outline-huge:hover {
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.38);
 }

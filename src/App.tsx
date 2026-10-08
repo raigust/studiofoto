@@ -40,6 +40,7 @@ import { CinemaBookingSection } from './components/CinemaBookingSection';
 import { BookingFormModal } from './components/BookingFormModal';
 import { PortfolioSection } from './components/PortfolioSection';
 import { ServicesPricingSection } from './components/ServicesPricingSection';
+import { AboutSection } from './components/AboutSection';
 import { CheckBookingModal } from './components/CheckBookingModal';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { AdminBentoDashboard } from './components/AdminBentoDashboard';
@@ -463,20 +464,7 @@ export default function App() {
                   }}
                 />
 
-                {/* Cinema Booking Section */}
-                <CinemaBookingSection
-                  bookings={bookings}
-                  daySchedules={daySchedules}
-                  preselectedCategory={preselectedCategory}
-                  onSelectSlotAndProceed={(date, slot, pkg) => {
-                    setSelectedBookingDate(date);
-                    setSelectedSlot(slot);
-                    setSelectedPackage(pkg);
-                    setBookingModalOpen(true);
-                  }}
-                />
-
-                {/* Portfolio Section */}
+                {/* Portfolio Section (Selected Work) */}
                 <PortfolioSection
                   portfolioItems={portfolioItems}
                   isAdmin={isAdminLoggedIn}
@@ -485,6 +473,16 @@ export default function App() {
                   }
                   onSelectCategoryForBooking={(cat) => {
                     setPreselectedCategory(cat);
+                    const el = document.getElementById('booking');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                />
+
+                {/* About Section (Ruang Studio & Narrative) */}
+                <AboutSection
+                  onGoToBooking={() => {
+                    const el = document.getElementById('booking');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
                 />
 
@@ -494,6 +492,19 @@ export default function App() {
                     setPreselectedCategory(cat);
                     const el = document.getElementById('booking');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                />
+
+                {/* Cinema Booking Section (Interactive Live Slot Visualizer) */}
+                <CinemaBookingSection
+                  bookings={bookings}
+                  daySchedules={daySchedules}
+                  preselectedCategory={preselectedCategory}
+                  onSelectSlotAndProceed={(date, slot, pkg) => {
+                    setSelectedBookingDate(date);
+                    setSelectedSlot(slot);
+                    setSelectedPackage(pkg);
+                    setBookingModalOpen(true);
                   }}
                 />
               </>
