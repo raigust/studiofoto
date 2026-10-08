@@ -2,7 +2,7 @@ export type BookingStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
 
 export type PaymentStatus = 'UNPAID' | 'DP_PAID' | 'PAID_FULL' | 'REFUNDED';
 
-export type ServiceCategory = 'wisuda' | 'produk' | 'pernikahan' | 'event' | 'portrait';
+export type ServiceCategory = 'wisuda' | 'produk' | 'pernikahan' | 'event' | 'portrait' | 'family' | 'studio';
 
 export interface ServicePackage {
   id: string;

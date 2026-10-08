@@ -13,6 +13,7 @@ import { Booking, StudioSettings } from '../types';
 import {
   generateCustomerInquiryWhatsAppUrl,
   sounds,
+  searchCustomerBookingByQuery,
 } from '../utils/storage';
 
 interface CheckBookingModalProps {
@@ -34,8 +35,9 @@ export const CheckBookingModal: React.FC<CheckBookingModalProps> = ({
   if (!isOpen) return null;
 
   const cleanTerm = searchTerm.toLowerCase().trim();
+  const sourceBookings = bookings.length > 0 ? bookings : searchCustomerBookingByQuery(cleanTerm);
   const foundBookings = cleanTerm
-    ? bookings.filter((b) => {
+    ? sourceBookings.filter((b) => {
         const idMatch = b.id.toLowerCase().includes(cleanTerm);
         const nameMatch = b.customerName.toLowerCase().includes(cleanTerm);
         const phoneMatch = b.customerPhone.replace(/\D/g, '').includes(cleanTerm.replace(/\D/g, ''));

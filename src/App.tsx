@@ -17,6 +17,7 @@ import {
 import {
   getStoredBookings,
   saveStoredBookings,
+  getPublicBookingsAvailability,
   getStoredPortfolio,
   saveStoredPortfolio,
   getStoredDaySchedules,
@@ -27,6 +28,9 @@ import {
   saveStoredSettings,
   getAdminAuthStatus,
   setAdminAuthStatus,
+  verifyAdminSession,
+  clearAdminSession,
+  refreshAdminSession,
   sounds,
 } from './utils/storage';
 import { SERVICE_PACKAGES } from './data/mockData';
@@ -45,15 +49,26 @@ import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'home' | 'booking' | 'portfolio' | 'services'>('home');
-  const [isAdminView, setIsAdminView] = useState<boolean>(false);
+  
+  // Gated Admin Authentication State
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(() => verifyAdminSession());
+  const [isAdminView, setIsAdminView] = useState<boolean>(() => {
+    const hash = window.location.hash.toLowerCase();
+    return (hash === '#admin' || hash === '#/admin') && verifyAdminSession();
+  });
 
-  // App state
-  const [bookings, setBookings] = useState<Booking[]>(getStoredBookings);
+  // SENSITIVE ADMIN DATA: ISOLATED AND LOADED ONLY IF AUTHENTICATED
+  // If user is unauthenticated, sensitive bookings & notifications are strictly empty in client memory!
+  const [bookings, setBookings] = useState<Booking[]>(() => {
+    return verifyAdminSession() ? getStoredBookings() : [];
+  });
+  const [publicSlotBookings, setPublicSlotBookings] = useState<Booking[]>(getPublicBookingsAvailability);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(getStoredPortfolio);
   const [daySchedules, setDaySchedules] = useState<Record<string, DaySchedule>>(getStoredDaySchedules);
-  const [notifications, setNotifications] = useState<AdminNotification[]>(getStoredNotifications);
+  const [notifications, setNotifications] = useState<AdminNotification[]>(() => {
+    return verifyAdminSession() ? getStoredNotifications() : [];
+  });
   const [studioSettings, setStudioSettings] = useState<StudioSettings>(getStoredSettings);
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState<boolean>(getAdminAuthStatus);
 
   // Modals
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
@@ -67,19 +82,64 @@ export default function App() {
   const [preselectedCategory, setPreselectedCategory] = useState<ServiceCategory | undefined>(undefined);
   const [activeToast, setActiveToast] = useState<{ id: string; title: string; message: string } | null>(null);
 
-  // Check URL hash/path for private admin endpoint
+  // Security Middleware: Hydrate data upon valid authentication, wipe upon logout
+  useEffect(() => {
+    if (isAdminLoggedIn) {
+      setBookings(getStoredBookings());
+      setNotifications(getStoredNotifications());
+      refreshAdminSession();
+    } else {
+      setBookings([]);
+      setNotifications([]);
+      clearAdminSession();
+    }
+  }, [isAdminLoggedIn]);
+
+  // Session Timeout Watchdog (Checks session token every 10 seconds)
+  useEffect(() => {
+    if (!isAdminLoggedIn) return;
+    const interval = setInterval(() => {
+      if (!verifyAdminSession()) {
+        setIsAdminLoggedIn(false);
+        setIsAdminView(false);
+        setBookings([]);
+        setNotifications([]);
+        window.location.hash = '';
+        setActiveToast({
+          id: 'session-timeout',
+          title: 'Sesi Admin Berakhir',
+          message: 'Sesi login Anda telah kedaluwarsa demi keamanan. Silakan login kembali.',
+        });
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [isAdminLoggedIn]);
+
+  // Security Gatekeeper: Check URL hash/path for private admin endpoint
   const checkAdminUrl = useCallback(() => {
     const hash = window.location.hash.toLowerCase();
     const path = window.location.pathname.toLowerCase();
 
     if (hash === '#admin' || hash === '#/admin' || path === '/admin') {
-      if (isAdminLoggedIn) {
+      if (verifyAdminSession()) {
+        setIsAdminLoggedIn(true);
         setIsAdminView(true);
+        setBookings(getStoredBookings());
+        setNotifications(getStoredNotifications());
       } else {
+        // Block access, keep data wiped, open authentication challenge modal
+        setIsAdminLoggedIn(false);
+        setIsAdminView(false);
+        setBookings([]);
+        setNotifications([]);
         setAdminLoginModalOpen(true);
+        window.history.replaceState(null, '', window.location.pathname);
       }
+    } else {
+      // Normal customer view
+      setIsAdminView(false);
     }
-  }, [isAdminLoggedIn]);
+  }, []);
 
   useEffect(() => {
     checkAdminUrl();
@@ -94,17 +154,26 @@ export default function App() {
   // Secret admin trigger
   const handleSecretAdminTrigger = () => {
     window.location.hash = '#admin';
-    if (isAdminLoggedIn) {
+    if (verifyAdminSession()) {
+      setIsAdminLoggedIn(true);
       setIsAdminView(true);
+      setBookings(getStoredBookings());
+      setNotifications(getStoredNotifications());
     } else {
+      setIsAdminLoggedIn(false);
+      setIsAdminView(false);
+      setBookings([]);
+      setNotifications([]);
       setAdminLoginModalOpen(true);
     }
   };
 
-  // Persist state updates
+  // Persist state updates (bookings saved ONLY when authenticated and populated)
   useEffect(() => {
-    saveStoredBookings(bookings);
-  }, [bookings]);
+    if (isAdminLoggedIn && bookings.length > 0) {
+      saveStoredBookings(bookings);
+    }
+  }, [bookings, isAdminLoggedIn]);
 
   useEffect(() => {
     saveStoredPortfolio(portfolioItems);
@@ -197,7 +266,18 @@ export default function App() {
       whatsappNotified: false,
     };
 
-    setBookings((prev) => [newBooking, ...prev]);
+    // Always persist to secure storage
+    const currentStored = getStoredBookings();
+    const updatedBookings = [newBooking, ...currentStored];
+    saveStoredBookings(updatedBookings);
+
+    // Update public sanitized slot availability
+    setPublicSlotBookings(getPublicBookingsAvailability());
+
+    // If admin is active in session, update live state and notification
+    if (isAdminLoggedIn) {
+      setBookings(updatedBookings);
+    }
 
     const newNotif: AdminNotification = {
       id: `notif-${Date.now()}`,
@@ -209,9 +289,12 @@ export default function App() {
       bookingId: newId,
     };
 
-    setNotifications((prev) => [newNotif, ...prev]);
+    const currentNotifs = getStoredNotifications();
+    const updatedNotifs = [newNotif, ...currentNotifs];
+    saveStoredNotifications(updatedNotifs);
 
     if (isAdminLoggedIn) {
+      setNotifications(updatedNotifs);
       setActiveToast({
         id: newNotif.id,
         title: newNotif.title,
@@ -396,6 +479,10 @@ export default function App() {
                 {/* Portfolio Section */}
                 <PortfolioSection
                   portfolioItems={portfolioItems}
+                  isAdmin={isAdminLoggedIn}
+                  onUpdatePortfolioPhoto={(id, newUrl) =>
+                    handleUpdatePortfolio(id, { imageUrl: newUrl })
+                  }
                   onSelectCategoryForBooking={(cat) => {
                     setPreselectedCategory(cat);
                   }}
@@ -429,6 +516,10 @@ export default function App() {
             {activeTab === 'portfolio' && (
               <PortfolioSection
                 portfolioItems={portfolioItems}
+                isAdmin={isAdminLoggedIn}
+                onUpdatePortfolioPhoto={(id, newUrl) =>
+                  handleUpdatePortfolio(id, { imageUrl: newUrl })
+                }
                 onSelectCategoryForBooking={(cat) => {
                   setPreselectedCategory(cat);
                   setActiveTab('booking');

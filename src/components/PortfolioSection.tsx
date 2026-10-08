@@ -6,6 +6,9 @@ import {
   ExternalLink,
   ArrowUpRight,
   Sparkles,
+  ImageIcon,
+  Check,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PortfolioItem, ServiceCategory } from '../types';
@@ -14,15 +17,24 @@ import { sounds } from '../utils/storage';
 interface PortfolioSectionProps {
   portfolioItems: PortfolioItem[];
   onSelectCategoryForBooking: (category: ServiceCategory) => void;
+  isAdmin?: boolean;
+  onUpdatePortfolioPhoto?: (id: string, newUrl: string) => void;
 }
 
 export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
   portfolioItems,
   onSelectCategoryForBooking,
+  isAdmin = false,
+  onUpdatePortfolioPhoto,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeLightboxItem, setActiveLightboxItem] = useState<PortfolioItem | null>(null);
+
+  // Quick photo link editor state
+  const [isEditingPhotoUrl, setIsEditingPhotoUrl] = useState(false);
+  const [newPhotoUrlInput, setNewPhotoUrlInput] = useState('');
+  const [photoUpdateSuccess, setPhotoUpdateSuccess] = useState(false);
 
   const categories: { id: string; label: string }[] = [
     { id: 'all', label: 'Semua Karya' },
@@ -54,10 +66,33 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
   const openLightbox = (item: PortfolioItem) => {
     sounds.playSeatClickSound();
     setActiveLightboxItem(item);
+    setIsEditingPhotoUrl(false);
+    setNewPhotoUrlInput(item.imageUrl);
+    setPhotoUpdateSuccess(false);
   };
 
   const closeLightbox = () => {
     setActiveLightboxItem(null);
+    setIsEditingPhotoUrl(false);
+  };
+
+  const handleSavePhotoUrl = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeLightboxItem || !newPhotoUrlInput.trim()) return;
+    sounds.playShutterSound();
+    const cleanUrl = newPhotoUrlInput.trim();
+    if (onUpdatePortfolioPhoto) {
+      onUpdatePortfolioPhoto(activeLightboxItem.id, cleanUrl);
+    }
+    setActiveLightboxItem({
+      ...activeLightboxItem,
+      imageUrl: cleanUrl,
+    });
+    setPhotoUpdateSuccess(true);
+    setTimeout(() => {
+      setPhotoUpdateSuccess(false);
+      setIsEditingPhotoUrl(false);
+    }, 1500);
   };
 
   return (
@@ -182,6 +217,22 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                     <ArrowUpRight className="w-3.5 h-3.5" />
                   </div>
 
+                  {/* Top-left Quick Edit for Admin */}
+                  {isAdmin && (
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openLightbox(item);
+                        setIsEditingPhotoUrl(true);
+                      }}
+                      className="absolute top-4 left-4 z-10 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-white/20 text-white text-[10px] font-mono font-medium flex items-center gap-1 shadow-md hover:bg-lime-400 hover:text-black transition-colors"
+                      title="Ganti URL Foto (Instagram / Web)"
+                    >
+                      <ImageIcon className="w-3 h-3 text-lime-400" />
+                      <span>Ganti Link Foto</span>
+                    </div>
+                  )}
+
                   {/* Bottom details */}
                   <div className="absolute bottom-0 inset-x-0 p-5 sm:p-6 text-white space-y-1">
                     <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400">
@@ -300,7 +351,7 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                       </div>
                     )}
 
-                    <div className="pt-2">
+                    <div className="pt-2 space-y-2">
                       <button
                         onClick={() => {
                           const cat = activeLightboxItem.category;
@@ -314,7 +365,76 @@ export const PortfolioSection: React.FC<PortfolioSectionProps> = ({
                         <span>Booking Sesi Serupa</span>
                         <ArrowUpRight className="w-3.5 h-3.5" />
                       </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          sounds.playSeatClickSound();
+                          setIsEditingPhotoUrl(!isEditingPhotoUrl);
+                          setNewPhotoUrlInput(activeLightboxItem.imageUrl);
+                        }}
+                        className="w-full py-2 px-3 rounded-full border border-white/20 bg-white/5 hover:bg-white/10 text-white font-medium text-[11px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5 text-lime-400" />
+                        <span>Ganti Link Foto (Instagram / URL)</span>
+                      </button>
                     </div>
+
+                    {/* Inline Photo URL Editor Form */}
+                    {isEditingPhotoUrl && (
+                      <form
+                        onSubmit={handleSavePhotoUrl}
+                        className="mt-3 p-3.5 rounded-2xl bg-white/[0.04] border border-white/15 space-y-2.5 text-xs text-left"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-white flex items-center gap-1.5 text-[11px]">
+                            <LinkIcon className="w-3 h-3 text-lime-400" />
+                            <span>Link Foto Instagram / Web</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingPhotoUrl(false)}
+                            className="text-zinc-500 hover:text-white p-1"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-zinc-400 leading-relaxed">
+                          Masukkan URL gambar langsung dari Instagram atau web CDN:
+                        </p>
+                        <input
+                          type="url"
+                          required
+                          value={newPhotoUrlInput}
+                          onChange={(e) => setNewPhotoUrlInput(e.target.value)}
+                          placeholder="https://..."
+                          className="w-full px-3 py-2 rounded-xl bg-black/60 border border-white/20 text-white font-mono text-[11px] focus:outline-none focus:border-lime-400"
+                        />
+                        {photoUpdateSuccess ? (
+                          <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 text-[11px] font-medium flex items-center gap-1.5">
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Foto karya berhasil diperbarui!</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-end gap-2 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => setIsEditingPhotoUrl(false)}
+                              className="px-3 py-1.5 rounded-full text-[11px] text-zinc-400 hover:text-white cursor-pointer"
+                            >
+                              Batal
+                            </button>
+                            <button
+                              type="submit"
+                              className="px-3.5 py-1.5 rounded-full bg-lime-300 hover:bg-lime-200 text-zinc-950 font-bold text-[11px] shadow-sm flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Check className="w-3 h-3" />
+                              <span>Simpan Foto</span>
+                            </button>
+                          </div>
+                        )}
+                      </form>
+                    )}
                   </div>
                 </div>
               </div>

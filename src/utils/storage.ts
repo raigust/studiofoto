@@ -180,6 +180,26 @@ export const getPublicBookingsAvailability = (): Booking[] => {
   }
 };
 
+export const searchCustomerBookingByQuery = (query: string): Booking[] => {
+  const cleanTerm = query.toLowerCase().trim();
+  if (!cleanTerm) return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.BOOKINGS);
+    if (!raw) return [];
+    const list: Booking[] = JSON.parse(raw);
+    return list.filter((b) => {
+      const idMatch = b.id.toLowerCase() === cleanTerm || b.id.toLowerCase().includes(cleanTerm);
+      const nameMatch = b.customerName.toLowerCase().includes(cleanTerm);
+      const phoneDigits = b.customerPhone.replace(/\D/g, '');
+      const queryDigits = cleanTerm.replace(/\D/g, '');
+      const phoneMatch = queryDigits.length >= 4 && phoneDigits.includes(queryDigits);
+      return idMatch || nameMatch || phoneMatch;
+    });
+  } catch {
+    return [];
+  }
+};
+
 export const getStoredPortfolio = (): PortfolioItem[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PORTFOLIO);
@@ -907,6 +927,31 @@ class SoundManager {
       gain2.connect(this.ctx.destination);
       osc2.start(t + 0.12);
       osc2.stop(t + 0.46);
+    } catch {
+      // Ignore audio error
+    }
+  }
+
+  // Subtle error tone
+  playErrorSound() {
+    try {
+      this.initCtx();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, t);
+      osc.frequency.exponentialRampToValueAtTime(140, t + 0.15);
+
+      gain.gain.setValueAtTime(0.2, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.16);
     } catch {
       // Ignore audio error
     }
