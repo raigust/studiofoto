@@ -19,6 +19,7 @@ export const DEFAULT_STUDIO_SETTINGS: StudioSettings = {
   autoCloseWhenQuotaReached: true,
   adminName: 'Raihan Gusti',
   adminRole: 'Lead Photographer & Studio Director',
+  heroBackgroundImageUrl: HERO_STUDIO_IMAGE,
 };
 
 export const STANDARD_SLOT_TEMPLATES = [

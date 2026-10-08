@@ -454,6 +454,14 @@ export default function App() {
             {activeTab === 'home' && (
               <>
                 <HeroSection
+                  backgroundImageUrl={studioSettings.heroBackgroundImageUrl}
+                  isAdmin={isAdminLoggedIn}
+                  onUpdateBackgroundImage={(newUrl) => {
+                    setStudioSettings((prev) => ({
+                      ...prev,
+                      heroBackgroundImageUrl: newUrl,
+                    }));
+                  }}
                   onGoToBooking={() => {
                     const el = document.getElementById('booking');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });

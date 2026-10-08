@@ -3209,6 +3209,33 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 </div>
               </div>
 
+              <div className="space-y-1.5 pt-2 border-t border-zinc-200 dark:border-white/10">
+                <label className="font-bold flex items-center justify-between">
+                  <span>URL Gambar Background 4K Hero Beranda</span>
+                  <span className="text-[10px] font-mono text-zinc-400">Resolusi Tinggi / 4K</span>
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={settingsForm.heroBackgroundImageUrl || ''}
+                  onChange={(e) => setSettingsForm({ ...settingsForm, heroBackgroundImageUrl: e.target.value })}
+                  className={`w-full px-3.5 py-2 rounded-xl font-mono text-[11px] ${inputBg}`}
+                />
+                <p className={`text-[10px] ${textMuted}`}>
+                  Latar belakang atmosferik gelap di bagian atas beranda. Masukkan direct image link dari Instagram, CDN, atau web.
+                </p>
+                {settingsForm.heroBackgroundImageUrl && (
+                  <div className="w-28 h-16 rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 relative mt-1 bg-black">
+                    <img
+                      src={settingsForm.heroBackgroundImageUrl}
+                      alt="Thumbnail"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40" />
+                  </div>
+                )}
+              </div>
+
               {settingsSavedToast && (
                 <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-medium">
                   Pengaturan berhasil disimpan!

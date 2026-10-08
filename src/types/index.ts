@@ -124,6 +124,7 @@ export interface StudioSettings {
   autoCloseWhenQuotaReached: boolean;
   adminName?: string;
   adminRole?: string;
+  heroBackgroundImageUrl?: string;
 }
 
 export type GearCategory = 'camera' | 'lens' | 'lighting' | 'modifier' | 'backdrop' | 'props';

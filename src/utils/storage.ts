@@ -293,7 +293,12 @@ export const getStoredSettings = (): StudioSettings => {
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_STUDIO_SETTINGS));
       return DEFAULT_STUDIO_SETTINGS;
     }
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_STUDIO_SETTINGS,
+      ...parsed,
+      heroBackgroundImageUrl: parsed.heroBackgroundImageUrl || DEFAULT_STUDIO_SETTINGS.heroBackgroundImageUrl,
+    };
   } catch (e) {
     console.error('Error reading settings from localStorage', e);
     return DEFAULT_STUDIO_SETTINGS;
