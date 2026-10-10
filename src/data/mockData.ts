@@ -241,19 +241,43 @@ export const INITIAL_PORTFOLIO: PortfolioItem[] = [
   },
 ];
 
-// Helper to generate dates around local time (2026-10-07)
-export const getTodayDateString = () => '2026-10-07';
+// Real-time dynamic calendar helpers
+export const getTodayDateString = (offsetDays: number = 0): string => {
+  const d = new Date();
+  if (offsetDays !== 0) {
+    d.setDate(d.getDate() + offsetDays);
+  }
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+export const parseDateString = (dateStr: string): Date => {
+  const parts = dateStr.split('-');
+  return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+};
+
+export const formatReadableDate = (dateStr: string): string => {
+  const d = parseDateString(dateStr);
+  return d.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+};
 
 export const INITIAL_BOOKINGS: Booking[] = [
   {
-    id: 'DFS-202610-001',
+    id: `DFS-${getTodayDateString().replace(/-/g, '').slice(0, 6)}-001`,
     customerName: 'Aditya Pratama',
     customerPhone: '6281234567890',
     customerEmail: 'aditya.pratama@gmail.com',
     category: 'wisuda',
     packageId: 'pkg-wisuda-atelier',
     packageName: 'Wisuda Atelier Exclusive',
-    date: '2026-10-08',
+    date: getTodayDateString(0),
     timeSlot: '09:00 - 10:30 WIB',
     timeSlotId: '09:00',
     numberOfPeople: 3,
@@ -262,19 +286,19 @@ export const INITIAL_BOOKINGS: Booking[] = [
     dpAmount: 325000,
     paymentStatus: 'DP_PAID',
     status: 'APPROVED',
-    createdAt: '2026-10-06T14:20:00Z',
-    approvedAt: '2026-10-06T15:00:00Z',
+    createdAt: new Date().toISOString(),
+    approvedAt: new Date().toISOString(),
     whatsappNotified: true,
   },
   {
-    id: 'DFS-202610-002',
+    id: `DFS-${getTodayDateString().replace(/-/g, '').slice(0, 6)}-002`,
     customerName: 'Clarissa Maharani',
     customerPhone: '6285711223344',
     customerEmail: 'clarissa.m@outlook.com',
     category: 'pernikahan',
     packageId: 'pkg-pernikahan-intimate',
     packageName: 'Pernikahan & Prewedding Noir',
-    date: '2026-10-08',
+    date: getTodayDateString(0),
     timeSlot: '13:30 - 15:00 WIB',
     timeSlotId: '13:30',
     numberOfPeople: 2,
@@ -283,19 +307,19 @@ export const INITIAL_BOOKINGS: Booking[] = [
     dpAmount: 925000,
     paymentStatus: 'DP_PAID',
     status: 'APPROVED',
-    createdAt: '2026-10-07T08:15:00Z',
-    approvedAt: '2026-10-07T09:00:00Z',
+    createdAt: new Date().toISOString(),
+    approvedAt: new Date().toISOString(),
     whatsappNotified: true,
   },
   {
-    id: 'DFS-202610-003',
+    id: `DFS-${getTodayDateString().replace(/-/g, '').slice(0, 6)}-003`,
     customerName: 'Bima Satria Wardhana',
     customerPhone: '6281399887766',
     customerEmail: 'bima.wardhana@techco.id',
     category: 'portrait',
     packageId: 'pkg-portrait-signature',
     packageName: 'Diafera Signature Personal Portrait',
-    date: '2026-10-09',
+    date: getTodayDateString(1),
     timeSlot: '11:00 - 12:30 WIB',
     timeSlotId: '11:00',
     numberOfPeople: 1,
@@ -304,18 +328,18 @@ export const INITIAL_BOOKINGS: Booking[] = [
     dpAmount: 275000,
     paymentStatus: 'DP_PAID',
     status: 'PENDING',
-    createdAt: '2026-10-07T10:05:00Z',
+    createdAt: new Date().toISOString(),
     whatsappNotified: false,
   },
   {
-    id: 'DFS-202610-004',
+    id: `DFS-${getTodayDateString().replace(/-/g, '').slice(0, 6)}-004`,
     customerName: 'Kallista Skin Botanicals',
     customerPhone: '6287812345678',
     customerEmail: 'marketing@kallistaskin.com',
     category: 'produk',
     packageId: 'pkg-produk-commercial',
     packageName: 'Commercial Product & Brand Campaign',
-    date: '2026-10-09',
+    date: getTodayDateString(1),
     timeSlot: '15:30 - 17:00 WIB',
     timeSlotId: '15:30',
     numberOfPeople: 2,
@@ -324,17 +348,17 @@ export const INITIAL_BOOKINGS: Booking[] = [
     dpAmount: 600000,
     paymentStatus: 'DP_PAID',
     status: 'PENDING',
-    createdAt: '2026-10-07T10:20:00Z',
+    createdAt: new Date().toISOString(),
     whatsappNotified: false,
   },
   {
-    id: 'DFS-202610-000',
+    id: `DFS-${getTodayDateString().replace(/-/g, '').slice(0, 6)}-000`,
     customerName: 'Galih & Kanya',
     customerPhone: '6281298765432',
     category: 'wisuda',
     packageId: 'pkg-wisuda-atelier',
     packageName: 'Wisuda Atelier Exclusive',
-    date: '2026-10-06',
+    date: getTodayDateString(-2),
     timeSlot: '15:30 - 17:00 WIB',
     timeSlotId: '15:30',
     numberOfPeople: 2,
@@ -343,60 +367,43 @@ export const INITIAL_BOOKINGS: Booking[] = [
     dpAmount: 650000,
     paymentStatus: 'PAID_FULL',
     status: 'COMPLETED',
-    createdAt: '2026-10-04T11:00:00Z',
-    approvedAt: '2026-10-04T12:00:00Z',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    approvedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
     whatsappNotified: true,
   },
 ];
 
-export const INITIAL_DAY_SCHEDULES: Record<string, DaySchedule> = {
-  '2026-10-07': {
-    date: '2026-10-07',
-    isClosed: true,
-    closeReason: 'Perawatan Kalibrasi Pencahayaan Studio & Pemeliharaan Backdrop',
-    maxCapacity: 0,
-    customNotes: 'Hari ini studio ditutup untuk kalibrasi teknis peralatan.',
-  },
-  '2026-10-08': {
-    date: '2026-10-08',
-    isClosed: false,
-    maxCapacity: 5,
-    customNotes: 'Jadwal reguler buka.',
-  },
-  '2026-10-09': {
-    date: '2026-10-09',
-    isClosed: false,
-    maxCapacity: 3, // example of customized capacity limit
-    customNotes: 'Kapasitas dibatasi 3 sesi untuk kenyamanan customer.',
-  },
-  '2026-10-10': {
-    date: '2026-10-10',
-    isClosed: false,
-    maxCapacity: 5,
-  },
-  '2026-10-11': {
-    date: '2026-10-11',
-    isClosed: false,
-    maxCapacity: 1, // Admin set "cukup satu customer aja" scenario
-    closeReason: 'Eksklusif: 1 Booking Prioritas Terpenuhi',
-    customNotes: 'Mode Single-Customer Booking aktif.',
-  },
-  '2026-10-12': {
-    date: '2026-10-12',
-    isClosed: false,
-    maxCapacity: 5,
-  },
-  '2026-10-13': {
-    date: '2026-10-13',
-    isClosed: false,
-    maxCapacity: 5,
-  },
-  '2026-10-14': {
-    date: '2026-10-14',
-    isClosed: false,
-    maxCapacity: 5,
-  },
+export const buildInitialDaySchedules = (): Record<string, DaySchedule> => {
+  const schedules: Record<string, DaySchedule> = {};
+  for (let i = -3; i <= 30; i++) {
+    const dStr = getTodayDateString(i);
+    if (i === 3) {
+      schedules[dStr] = {
+        date: dStr,
+        isClosed: false,
+        maxCapacity: 1,
+        closeReason: 'Eksklusif: 1 Booking Prioritas Terpenuhi',
+        customNotes: 'Mode Single-Customer Booking aktif.',
+      };
+    } else if (i === 6) {
+      schedules[dStr] = {
+        date: dStr,
+        isClosed: false,
+        maxCapacity: 3,
+        customNotes: 'Kapasitas dibatasi 3 sesi untuk kenyamanan customer.',
+      };
+    } else {
+      schedules[dStr] = {
+        date: dStr,
+        isClosed: false,
+        maxCapacity: 5,
+      };
+    }
+  }
+  return schedules;
 };
+
+export const INITIAL_DAY_SCHEDULES: Record<string, DaySchedule> = buildInitialDaySchedules();
 
 export const STUDIO_ADDONS = [
   { id: 'addon-ot-30', name: 'Overtime Studio (+30 Menit)', price: 150000, unit: 'sesi' },

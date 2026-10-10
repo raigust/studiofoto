@@ -19,6 +19,7 @@ import {
   sounds,
   triggerConfetti,
   generateCustomerInquiryWhatsAppUrl,
+  formatReadableDate,
 } from '../utils/storage';
 
 interface BookingFormModalProps {
@@ -52,12 +53,7 @@ export const BookingFormModal: React.FC<BookingFormModalProps> = ({
 
   const dpAmount = Math.round(servicePackage.price * 0.5);
 
-  const readableDate = new Date(date).toLocaleDateString('id-ID', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const readableDate = formatReadableDate(date);
 
   const validate = () => {
     const errs: Record<string, string> = {};

@@ -32,6 +32,7 @@ import {
   clearAdminSession,
   refreshAdminSession,
   sounds,
+  getTodayDateString,
 } from './utils/storage';
 import { SERVICE_PACKAGES, DEFAULT_HERO_CARDS } from './data/mockData';
 import { Navbar } from './components/Navbar';
@@ -73,7 +74,7 @@ export default function App() {
 
   // Modals
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
-  const [selectedBookingDate, setSelectedBookingDate] = useState<string>('2026-10-08');
+  const [selectedBookingDate, setSelectedBookingDate] = useState<string>(() => getTodayDateString(0));
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [selectedPackage, setSelectedPackage] = useState<ServicePackage>(SERVICE_PACKAGES[0]);
 
@@ -206,8 +207,8 @@ export default function App() {
       { name: 'Dr. Vania Anindita', phone: '081388776655', pkg: SERVICE_PACKAGES[4], time: '17:30', label: '17:30 - 19:00 WIB' },
     ];
     const pick = sampleCustomers[Math.floor(Math.random() * sampleCustomers.length)];
-    const targetDate = '2026-10-10';
-    const newId = `DFS-202610-${String(Math.floor(Math.random() * 900) + 100)}`;
+    const targetDate = getTodayDateString(Math.random() > 0.5 ? 0 : 1);
+    const newId = `DFS-${targetDate.replace(/-/g, '').slice(0, 6)}-${String(Math.floor(Math.random() * 900) + 100)}`;
 
     const newBooking: Booking = {
       id: newId,

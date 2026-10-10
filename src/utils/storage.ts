@@ -23,7 +23,12 @@ import {
   INITIAL_STUDIO_GEAR,
   INITIAL_STUDIO_EXPENSES,
   HERO_STUDIO_IMAGE,
+  getTodayDateString,
+  parseDateString,
+  formatReadableDate,
 } from '../data/mockData';
+
+export { getTodayDateString, parseDateString, formatReadableDate };
 
 const STORAGE_KEYS = {
   BOOKINGS: 'diafera_bookings_v1',
@@ -133,7 +138,27 @@ export const getStoredBookings = (): Booking[] => {
       localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(INITIAL_BOOKINGS));
       return INITIAL_BOOKINGS;
     }
-    return JSON.parse(raw);
+    const parsed: Booking[] = JSON.parse(raw);
+    const todayStr = getTodayDateString(0);
+    // If stored bookings are legacy mock with fixed 2026-10-08 date, shift seed bookings to today
+    const hasLegacyFixedDate = parsed.some((b) => b.id.startsWith('DFS-202610-00') && (b.date === '2026-10-08' || b.date === '2026-10-09'));
+    if (hasLegacyFixedDate && todayStr !== '2026-10-08') {
+      const updated = parsed.map((b) => {
+        if (b.id === 'DFS-202610-001' || b.id === 'DFS-202610-002') {
+          return { ...b, date: getTodayDateString(0) };
+        }
+        if (b.id === 'DFS-202610-003' || b.id === 'DFS-202610-004') {
+          return { ...b, date: getTodayDateString(1) };
+        }
+        if (b.id === 'DFS-202610-000') {
+          return { ...b, date: getTodayDateString(-2) };
+        }
+        return b;
+      });
+      localStorage.setItem(STORAGE_KEYS.BOOKINGS, JSON.stringify(updated));
+      return updated;
+    }
+    return parsed;
   } catch (e) {
     console.error('Error reading bookings from localStorage', e);
     return INITIAL_BOOKINGS;
@@ -230,7 +255,14 @@ export const getStoredDaySchedules = (): Record<string, DaySchedule> => {
       localStorage.setItem(STORAGE_KEYS.DAY_SCHEDULES, JSON.stringify(INITIAL_DAY_SCHEDULES));
       return INITIAL_DAY_SCHEDULES;
     }
-    return JSON.parse(raw);
+    const parsed: Record<string, DaySchedule> = JSON.parse(raw);
+    const todayStr = getTodayDateString(0);
+    if (!parsed[todayStr]) {
+      const merged = { ...INITIAL_DAY_SCHEDULES, ...parsed };
+      localStorage.setItem(STORAGE_KEYS.DAY_SCHEDULES, JSON.stringify(merged));
+      return merged;
+    }
+    return parsed;
   } catch (e) {
     console.error('Error reading day schedules from localStorage', e);
     return INITIAL_DAY_SCHEDULES;
@@ -534,9 +566,17 @@ export const getComputedSlotsForDate = (
   const approvedBookings = dayBookings.filter((b) => b.status === 'APPROVED');
   const activeApprovedCount = approvedBookings.length;
 
+  const todayStr = getTodayDateString(0);
+  const isPastDate = date < todayStr;
+  const isToday = date === todayStr;
+
   // Check if max capacity reached (e.g., admin set maxCapacity = 1)
   const isCapacityReached = dayInfo.maxCapacity > 0 && activeApprovedCount >= dayInfo.maxCapacity;
-  const isDayFullyUnavailable = dayInfo.isClosed || isCapacityReached;
+  const isDayFullyUnavailable = isPastDate || dayInfo.isClosed || isCapacityReached;
+
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
 
   const slots: TimeSlot[] = STANDARD_SLOT_TEMPLATES.map((tmpl) => {
     const existingBooking = dayBookings.find((b) => b.timeSlotId === tmpl.time);
@@ -548,7 +588,13 @@ export const getComputedSlotsForDate = (
     let packageName: string | undefined = undefined;
     let blockReason: string | undefined = undefined;
 
-    if (dayInfo.isClosed) {
+    const [slotHour, slotMinute] = tmpl.time.split(':').map(Number);
+    const hasSlotPassed = isToday && (slotHour < currentHour || (slotHour === currentHour && slotMinute <= currentMinute));
+
+    if (isPastDate) {
+      status = 'blocked';
+      blockReason = 'Tanggal telah berlalu (tidak dapat dipesan)';
+    } else if (dayInfo.isClosed) {
       status = 'blocked';
       blockReason = dayInfo.closeReason || 'Studio Ditutup oleh Admin';
     } else if (isManuallyLocked) {
@@ -563,6 +609,9 @@ export const getComputedSlotsForDate = (
       } else if (existingBooking.status === 'PENDING') {
         status = 'pending';
       }
+    } else if (hasSlotPassed) {
+      status = 'blocked';
+      blockReason = 'Waktu sesi telah lewat hari ini';
     } else if (isCapacityReached) {
       // If capacity reached, unbooked slots become unavailable!
       status = 'blocked';

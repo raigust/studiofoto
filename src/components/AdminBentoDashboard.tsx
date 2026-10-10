@@ -104,6 +104,8 @@ import {
   DEFAULT_ADMIN_PROFILE,
   sounds,
   triggerConfetti,
+  getTodayDateString,
+  formatReadableDate,
 } from '../utils/storage';
 import {
   HERO_STUDIO_IMAGE,
@@ -232,8 +234,8 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
   };
 
-  // Schedule management date selector
-  const [scheduleDate, setScheduleDate] = useState<string>('2026-10-08');
+  // Schedule management date selector (defaults to current calendar date)
+  const [scheduleDate, setScheduleDate] = useState<string>(() => getTodayDateString(0));
 
   // Manual / Walk-in Booking Modal State
   const [manualBookingModalOpen, setManualBookingModalOpen] = useState(false);
@@ -241,7 +243,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
     customerName: '',
     customerPhone: '',
     packageId: SERVICE_PACKAGES[0].id,
-    date: '2026-10-08',
+    date: getTodayDateString(0),
     timeSlot: '09:00 - 10:30 WIB',
     timeSlotId: '09:00',
     numberOfPeople: 2,
@@ -1781,7 +1783,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                       <h3 className={`text-base font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
                         Jadwal Sesi Hari Ini
                       </h3>
-                      <p className={`text-xs ${textMuted}`}>{scheduleDate}</p>
+                      <p className={`text-xs ${textMuted}`}>{formatReadableDate(scheduleDate)} ({scheduleDate})</p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -1897,7 +1899,21 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 <p className={`text-xs ${textMuted}`}>Atur penonaktifan hari, mode 1 customer, atau kunci slot individu.</p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setScheduleDate(getTodayDateString(0))}
+                  className="px-2.5 py-1 text-xs font-mono rounded-xl border border-orange-500/30 text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 transition-colors"
+                >
+                  Hari Ini
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScheduleDate(getTodayDateString(1))}
+                  className="px-2.5 py-1 text-xs font-mono rounded-xl border border-white/10 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
+                >
+                  Besok
+                </button>
                 <input
                   type="date"
                   value={scheduleDate}

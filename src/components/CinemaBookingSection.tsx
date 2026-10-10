@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Clock,
   CheckCircle2,
@@ -7,6 +7,9 @@ import {
   AlertCircle,
   ChevronRight,
   ShieldAlert,
+  Calendar,
+  Sparkles,
+  RotateCcw,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import {
@@ -16,7 +19,13 @@ import {
   TimeSlot,
   ServiceCategory,
 } from '../types';
-import { getComputedSlotsForDate, sounds } from '../utils/storage';
+import {
+  getComputedSlotsForDate,
+  sounds,
+  getTodayDateString,
+  formatReadableDate,
+  parseDateString,
+} from '../utils/storage';
 import { SERVICE_PACKAGES } from '../data/mockData';
 
 interface CinemaBookingSectionProps {
@@ -32,13 +41,26 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
   onSelectSlotAndProceed,
   preselectedCategory,
 }) => {
-  const baseDate = new Date(2026, 9, 7); // Oct 7, 2026
+  // Real-time calendar date detection: reads actual system calendar right now
+  const todayStr = useMemo(() => getTodayDateString(0), []);
 
   const upcomingDays = useMemo(() => {
-    const list: { dateString: string; dayName: string; dayNumber: string; monthName: string }[] = [];
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(baseDate);
-      d.setDate(baseDate.getDate() + i);
+    const list: {
+      dateString: string;
+      dayName: string;
+      dayNumber: string;
+      monthName: string;
+      isToday: boolean;
+      isTomorrow: boolean;
+    }[] = [];
+
+    const now = new Date();
+    // Midnight normalized for date additions
+    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
 
       const yyyy = d.getFullYear();
       const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -54,18 +76,28 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
         dayName,
         dayNumber,
         monthName,
+        isToday: i === 0,
+        isTomorrow: i === 1,
       });
     }
     return list;
-  }, []);
+  }, [todayStr]);
 
-  const [selectedDate, setSelectedDate] = useState<string>('2026-10-08');
+  // Selected date defaults to TODAY in real-time
+  const [selectedDate, setSelectedDate] = useState<string>(() => getTodayDateString(0));
   const [selectedSlotTime, setSelectedSlotTime] = useState<string | null>('11:00');
   const [selectedPackageId, setSelectedPackageId] = useState<string>(
     preselectedCategory
       ? SERVICE_PACKAGES.find((p) => p.category === preselectedCategory)?.id || SERVICE_PACKAGES[0].id
       : SERVICE_PACKAGES[0].id
   );
+
+  // Safety watchdog: Past dates can NEVER be selected
+  useEffect(() => {
+    if (selectedDate < todayStr) {
+      setSelectedDate(todayStr);
+    }
+  }, [selectedDate, todayStr]);
 
   const { slots, dayInfo, isFullyBookedOrClosed, activeApprovedCount } = useMemo(() => {
     return getComputedSlotsForDate(selectedDate, bookings, daySchedules);
@@ -93,20 +125,33 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
   };
 
   const readableSelectedDate = useMemo(() => {
-    const parts = selectedDate.split('-');
-    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    return d.toLocaleDateString('id-ID', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+    return formatReadableDate(selectedDate);
   }, [selectedDate]);
+
+  const readableToday = useMemo(() => {
+    return formatReadableDate(todayStr);
+  }, [todayStr]);
+
+  const isSelectedDateInUpcoming = useMemo(() => {
+    return upcomingDays.some((d) => d.dateString === selectedDate);
+  }, [upcomingDays, selectedDate]);
 
   return (
     <section id="booking" className="py-20 sm:py-28 bg-[#0a0a0c] border-t border-white/10 relative">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         
+        {/* Real-time calendar indicator badge */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-mono">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Kalender Real-time Aktif</span>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-zinc-300 text-xs font-mono">
+            <Calendar className="w-3.5 h-3.5 text-orange-400" />
+            <span>Hari ini: <strong className="text-white font-semibold">{readableToday}</strong></span>
+          </div>
+        </div>
+
         {/* Section Header */}
         <div className="space-y-4 mb-12">
           <p className="text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-400">
@@ -118,7 +163,7 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
                 Pilih tanggal & slot sesi Anda.
               </h2>
               <p className="text-zinc-400 text-sm sm:text-base mt-2 max-w-xl font-normal">
-                Visual slot real-time. Pilih waktu yang tersedia untuk reservasi sesi studio privat Anda.
+                Visual slot real-time sinkron dengan kalender hari ini. Tanggal yang telah berlalu otomatis dinonaktifkan.
               </p>
             </div>
           </div>
@@ -126,12 +171,74 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
 
         {/* 1. Date Selector Strip */}
         <div className="mb-10">
-          <div className="flex items-center justify-between mb-3 text-xs font-mono text-zinc-400">
-            <span>1. TENTUKAN TANGGAL SESI</span>
-            <span className="text-zinc-500">12 Hari Ke Depan</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3 text-xs font-mono">
+            <div className="flex items-center gap-2 text-zinc-300">
+              <span className="font-semibold text-white tracking-wider">1. TENTUKAN TANGGAL SESI</span>
+              <span className="text-[11px] text-zinc-500 bg-white/5 px-2 py-0.5 rounded-md border border-white/5">
+                Mulai Hari Ini ({upcomingDays.length} Hari)
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {/* Native Calendar Picker with min={todayStr} */}
+              <label className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#141418] hover:bg-[#1a1a20] border border-white/10 hover:border-white/20 text-xs text-zinc-300 cursor-pointer transition-colors shadow-sm">
+                <Calendar className="w-3.5 h-3.5 text-orange-400" />
+                <span>Pilih di Kalender</span>
+                <input
+                  type="date"
+                  min={todayStr}
+                  value={selectedDate}
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    if (e.target.value < todayStr) {
+                      setSelectedDate(todayStr);
+                      return;
+                    }
+                    sounds.playSeatClickSound();
+                    setSelectedDate(e.target.value);
+                    setSelectedSlotTime(null);
+                  }}
+                  className="sr-only"
+                />
+              </label>
+
+              {selectedDate !== todayStr && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    sounds.playSeatClickSound();
+                    setSelectedDate(todayStr);
+                    setSelectedSlotTime(null);
+                  }}
+                  className="flex items-center gap-1 text-[11px] font-mono px-2.5 py-1.5 rounded-xl bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 transition-colors cursor-pointer"
+                  title="Kembali ke Hari Ini"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Hari Ini</span>
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-3 pt-1 scrollbar-none">
+            {/* If user picked custom date beyond upcomingDays */}
+            {!isSelectedDateInUpcoming && (
+              <button
+                type="button"
+                className="relative flex flex-col items-center justify-between min-w-[84px] sm:min-w-[92px] h-[86px] p-2 rounded-2xl border transition-all cursor-pointer shrink-0 bg-white text-black border-white shadow-lg"
+              >
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-orange-500 text-white">
+                  PILIHAN ANDA
+                </span>
+                <span className="text-xl font-bold tabular-nums text-black">
+                  {selectedDate.split('-')[2]}
+                </span>
+                <span className="text-[10px] font-mono uppercase text-zinc-700">
+                  {formatReadableDate(selectedDate).split(' ')[1]}
+                </span>
+              </button>
+            )}
+
             {upcomingDays.map((item) => {
               const isSelected = selectedDate === item.dateString;
               const dateMeta = daySchedules[item.dateString];
@@ -146,17 +253,35 @@ export const CinemaBookingSection: React.FC<CinemaBookingSectionProps> = ({
                     setSelectedDate(item.dateString);
                     setSelectedSlotTime(null);
                   }}
-                  className={`flex flex-col items-center justify-between min-w-[76px] sm:min-w-[84px] h-20 p-2.5 rounded-2xl border transition-all cursor-pointer shrink-0 ${
+                  className={`relative flex flex-col items-center justify-between min-w-[78px] sm:min-w-[88px] h-[86px] p-2.5 rounded-2xl border transition-all cursor-pointer shrink-0 ${
                     isSelected
-                      ? 'bg-white text-black border-white shadow-md'
+                      ? 'bg-white text-black border-white shadow-xl scale-[1.02]'
                       : isClosed
                       ? 'bg-[#111114] border-white/5 text-zinc-600 opacity-40'
                       : 'bg-[#121215] border-white/10 text-zinc-400 hover:text-white hover:border-white/20'
                   }`}
                 >
-                  <span className={`text-[10px] font-mono uppercase tracking-wider ${isSelected ? 'text-zinc-600' : 'text-zinc-500'}`}>
-                    {item.dayName}
-                  </span>
+                  {/* Badge Hari Ini / Besok */}
+                  {item.isToday && (
+                    <span className={`text-[8px] font-mono font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                      isSelected ? 'bg-orange-500 text-white' : 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+                    }`}>
+                      HARI INI
+                    </span>
+                  )}
+                  {item.isTomorrow && (
+                    <span className={`text-[8px] font-mono font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                      isSelected ? 'bg-zinc-800 text-white' : 'bg-white/10 text-zinc-300'
+                    }`}>
+                      BESOK
+                    </span>
+                  )}
+                  {!item.isToday && !item.isTomorrow && (
+                    <span className={`text-[10px] font-mono uppercase tracking-wider ${isSelected ? 'text-zinc-600' : 'text-zinc-500'}`}>
+                      {item.dayName}
+                    </span>
+                  )}
+
                   <span className={`text-xl font-bold tabular-nums ${isSelected ? 'text-black' : 'text-white'}`}>
                     {item.dayNumber}
                   </span>

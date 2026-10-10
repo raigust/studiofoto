@@ -14,6 +14,7 @@ import {
   generateCustomerInquiryWhatsAppUrl,
   sounds,
   searchCustomerBookingByQuery,
+  formatReadableDate,
 } from '../utils/storage';
 
 interface CheckBookingModalProps {
@@ -156,7 +157,7 @@ export const CheckBookingModal: React.FC<CheckBookingModalProps> = ({
                         <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-white/5 text-zinc-300">
                           <div>
                             <span className="text-zinc-500 block text-[10px]">Jadwal Sesi:</span>
-                            <span className="font-medium text-orange-300">{b.date}</span>
+                            <span className="font-medium text-orange-300">{formatReadableDate(b.date)}</span>
                           </div>
                           <div>
                             <span className="text-zinc-500 block text-[10px]">Waktu:</span>
