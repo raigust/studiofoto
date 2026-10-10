@@ -17,6 +17,7 @@ import {
   INITIAL_PORTFOLIO,
   INITIAL_DAY_SCHEDULES,
   DEFAULT_STUDIO_SETTINGS,
+  DEFAULT_HERO_CARDS,
   STANDARD_SLOT_TEMPLATES,
   DEFAULT_STUDIO_TASKS,
   INITIAL_STUDIO_GEAR,
@@ -294,10 +295,18 @@ export const getStoredSettings = (): StudioSettings => {
       return DEFAULT_STUDIO_SETTINGS;
     }
     const parsed = JSON.parse(raw);
+    let heroBg = parsed.heroBackgroundImageUrl || DEFAULT_STUDIO_SETTINGS.heroBackgroundImageUrl;
+    if (heroBg && heroBg.startsWith('/src/assets/images/')) {
+      heroBg = heroBg.replace('/src/assets/images/', '/images/');
+    }
+    const heroCards = Array.isArray(parsed.heroCards) && parsed.heroCards.length === 5
+      ? parsed.heroCards
+      : DEFAULT_HERO_CARDS;
     return {
       ...DEFAULT_STUDIO_SETTINGS,
       ...parsed,
-      heroBackgroundImageUrl: parsed.heroBackgroundImageUrl || DEFAULT_STUDIO_SETTINGS.heroBackgroundImageUrl,
+      heroBackgroundImageUrl: heroBg,
+      heroCards,
     };
   } catch (e) {
     console.error('Error reading settings from localStorage', e);

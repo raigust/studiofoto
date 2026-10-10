@@ -57,6 +57,8 @@ import {
   ShieldCheck,
   Image as ImageIcon,
   Link as LinkIcon,
+  Layers,
+  RotateCcw,
 } from 'lucide-react';
 import { DiaferaLogo } from './DiaferaLogo';
 import { motion, AnimatePresence } from 'motion/react';
@@ -98,6 +100,7 @@ import {
   verifyAdminSession,
   getAdminSession,
   refreshAdminSession,
+  saveStoredSettings,
   DEFAULT_ADMIN_PROFILE,
   sounds,
   triggerConfetti,
@@ -110,6 +113,7 @@ import {
   EVENT_PORTFOLIO_IMAGE,
   SERVICE_PACKAGES,
   STUDIO_ADDONS,
+  DEFAULT_HERO_CARDS,
 } from '../data/mockData';
 
 interface AdminBentoDashboardProps {
@@ -288,6 +292,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
   // Settings form
   const [settingsForm, setSettingsForm] = useState<StudioSettings>({ ...studioSettings });
   const [settingsSavedToast, setSettingsSavedToast] = useState(false);
+
+  useEffect(() => {
+    setSettingsForm({ ...studioSettings });
+  }, [studioSettings]);
 
   // --- ADMIN PROFILE & CREDENTIALS HANDLERS ---
   const handleSaveProfile = (e: React.FormEvent) => {
@@ -3153,6 +3161,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 e.preventDefault();
                 sounds.playShutterSound();
                 onUpdateSettings(settingsForm);
+                saveStoredSettings(settingsForm);
                 setSettingsSavedToast(true);
                 setTimeout(() => setSettingsSavedToast(false), 3000);
               }}
@@ -3214,26 +3223,146 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   <span>URL Gambar Background 4K Hero Beranda</span>
                   <span className="text-[10px] font-mono text-zinc-400">Resolusi Tinggi / 4K</span>
                 </label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={settingsForm.heroBackgroundImageUrl || ''}
-                  onChange={(e) => setSettingsForm({ ...settingsForm, heroBackgroundImageUrl: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl font-mono text-[11px] ${inputBg}`}
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="https://... atau /images/..."
+                    value={settingsForm.heroBackgroundImageUrl || ''}
+                    onChange={(e) => setSettingsForm({ ...settingsForm, heroBackgroundImageUrl: e.target.value })}
+                    className={`flex-1 px-3.5 py-2 rounded-xl font-mono text-[11px] ${inputBg}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!settingsForm.heroBackgroundImageUrl?.trim()) return;
+                      sounds.playShutterSound();
+                      onUpdateSettings(settingsForm);
+                      saveStoredSettings(settingsForm);
+                      setSettingsSavedToast(true);
+                      setTimeout(() => setSettingsSavedToast(false), 3000);
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors shrink-0 cursor-pointer"
+                  >
+                    Terapkan Sekarang
+                  </button>
+                </div>
                 <p className={`text-[10px] ${textMuted}`}>
-                  Latar belakang atmosferik gelap di bagian atas beranda. Masukkan direct image link dari Instagram, CDN, atau web.
+                  Latar belakang atmosferik di bagian atas beranda belakang tulisan Diaféra Studio. Masukkan direct image link dari Instagram, CDN, atau web (4K).
                 </p>
+
+                {/* Quick 4K Presets */}
+                <div className="space-y-1 pt-1">
+                  <p className="text-[10px] font-mono text-zinc-400 uppercase">Pilihan Preset 4K Cepat:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { label: 'Cinematic Dark Studio 4K', url: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=2670&auto=format&fit=crop' },
+                      { label: 'Minimalist Architectural 4K', url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=2670&auto=format&fit=crop' },
+                      { label: 'Studio Setup Asli', url: '/images/diafera_hero_studio_1791366216457.jpg' },
+                      { label: 'Wisuda Drapery', url: '/images/diafera_portfolio_wisuda_1791366242072.jpg' },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => {
+                          sounds.playSeatClickSound();
+                          setSettingsForm({ ...settingsForm, heroBackgroundImageUrl: preset.url });
+                        }}
+                        className={`px-2.5 py-1 rounded-lg border text-[10px] transition-colors cursor-pointer ${
+                          settingsForm.heroBackgroundImageUrl === preset.url
+                            ? 'bg-blue-600 text-white border-blue-500 font-semibold'
+                            : isLight
+                            ? 'bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-700'
+                            : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {settingsForm.heroBackgroundImageUrl && (
-                  <div className="w-28 h-16 rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 relative mt-1 bg-black">
+                  <div className="w-full sm:w-72 h-32 rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 relative mt-2 bg-black shadow-inner">
                     <img
                       src={settingsForm.heroBackgroundImageUrl}
-                      alt="Thumbnail"
+                      alt="Thumbnail Hero 4K"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/images/diafera_hero_studio_1791366216457.jpg';
+                      }}
                     />
-                    <div className="absolute inset-0 bg-black/40" />
+                    <div className="absolute inset-0 bg-black/45" />
+                    <div className="absolute bottom-2 left-2 right-2 text-[10px] text-white/90 font-mono bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm truncate">
+                      Pratinjau Hero: {settingsForm.heroBackgroundImageUrl}
+                    </div>
                   </div>
                 )}
+              </div>
+
+              {/* Kelola 5 Foto Showcase Beranda (Preview Cards 4K) */}
+              <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-white/10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="font-bold text-xs flex items-center gap-1.5">
+                      <Layers className="w-3.5 h-3.5 text-blue-500" />
+                      <span>5 Foto Showcase Beranda (Preview Cards 4K)</span>
+                    </label>
+                    <p className={`text-[10px] ${textMuted} mt-0.5`}>
+                      Ubah tautan 5 foto kartu di bagian awal beranda (mendukung direct link Instagram, CDN, Unsplash, atau link web apa pun).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sounds.playSeatClickSound();
+                      setSettingsForm({ ...settingsForm, heroCards: DEFAULT_HERO_CARDS });
+                    }}
+                    className="text-[10px] font-mono text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset Default 4K</span>
+                  </button>
+                </div>
+
+                <div className="space-y-2.5">
+                  {(settingsForm.heroCards || DEFAULT_HERO_CARDS).map((card, idx) => (
+                    <div
+                      key={card.id || idx}
+                      className={`p-2.5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center gap-3 ${
+                        isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-black/40 border-white/10'
+                      }`}
+                    >
+                      <div className="w-12 h-14 rounded-lg overflow-hidden border border-zinc-200 dark:border-white/10 shrink-0 bg-black relative">
+                        <img
+                          src={card.imageUrl}
+                          alt={card.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              DEFAULT_HERO_CARDS[idx]?.imageUrl || HERO_STUDIO_IMAGE;
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1 w-full min-w-0 space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-bold truncate">#{idx + 1} {card.title}</span>
+                          <span className={`text-[9px] font-mono ${textMuted}`}>{card.concept}</span>
+                        </div>
+                        <input
+                          type="text"
+                          value={card.imageUrl}
+                          onChange={(e) => {
+                            const current = [...(settingsForm.heroCards || DEFAULT_HERO_CARDS)];
+                            current[idx] = { ...current[idx], imageUrl: e.target.value };
+                            setSettingsForm({ ...settingsForm, heroCards: current });
+                          }}
+                          placeholder="https://..."
+                          className={`w-full px-2.5 py-1 rounded-lg font-mono text-[10px] ${inputBg}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {settingsSavedToast && (

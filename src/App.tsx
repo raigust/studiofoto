@@ -33,7 +33,7 @@ import {
   refreshAdminSession,
   sounds,
 } from './utils/storage';
-import { SERVICE_PACKAGES } from './data/mockData';
+import { SERVICE_PACKAGES, DEFAULT_HERO_CARDS } from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
 import { CinemaBookingSection } from './components/CinemaBookingSection';
@@ -406,6 +406,11 @@ export default function App() {
     setBookings((prev) => [booking, ...prev]);
   };
 
+  const handleUpdateSettings = (updated: StudioSettings) => {
+    setStudioSettings(updated);
+    saveStoredSettings(updated);
+  };
+
   return (
     <div className="min-h-screen bg-[#070709] text-[#f4f4f6] flex flex-col font-sans selection:bg-orange-500/30 selection:text-orange-200">
       
@@ -426,7 +431,7 @@ export default function App() {
           onAddPortfolio={handleAddPortfolio}
           onUpdatePortfolio={handleUpdatePortfolio}
           onDeletePortfolio={onDeletePortfolio}
-          onUpdateSettings={setStudioSettings}
+          onUpdateSettings={handleUpdateSettings}
           onLogout={() => {
             setIsAdminLoggedIn(false);
             setIsAdminView(false);
@@ -455,12 +460,35 @@ export default function App() {
               <>
                 <HeroSection
                   backgroundImageUrl={studioSettings.heroBackgroundImageUrl}
+                  heroCards={studioSettings.heroCards}
                   isAdmin={isAdminLoggedIn}
                   onUpdateBackgroundImage={(newUrl) => {
-                    setStudioSettings((prev) => ({
-                      ...prev,
+                    const updated = {
+                      ...studioSettings,
                       heroBackgroundImageUrl: newUrl,
-                    }));
+                    };
+                    setStudioSettings(updated);
+                    saveStoredSettings(updated);
+                  }}
+                  onUpdateHeroCardImage={(index, newUrl) => {
+                    const currentCards = studioSettings.heroCards || DEFAULT_HERO_CARDS;
+                    const updatedCards = currentCards.map((card, i) =>
+                      i === index ? { ...card, imageUrl: newUrl } : card
+                    );
+                    const updated = {
+                      ...studioSettings,
+                      heroCards: updatedCards,
+                    };
+                    setStudioSettings(updated);
+                    saveStoredSettings(updated);
+                  }}
+                  onUpdateAllHeroCards={(cards) => {
+                    const updated = {
+                      ...studioSettings,
+                      heroCards: cards,
+                    };
+                    setStudioSettings(updated);
+                    saveStoredSettings(updated);
                   }}
                   onGoToBooking={() => {
                     const el = document.getElementById('booking');

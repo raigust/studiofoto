@@ -111,6 +111,13 @@ export interface AdminNotification {
   bookingId?: string;
 }
 
+export interface HeroCardItem {
+  id: string;
+  title: string;
+  concept: string;
+  imageUrl: string;
+}
+
 export interface StudioSettings {
   studioName: string;
   tagline: string;
@@ -125,6 +132,7 @@ export interface StudioSettings {
   adminName?: string;
   adminRole?: string;
   heroBackgroundImageUrl?: string;
+  heroCards?: HeroCardItem[];
 }
 
 export type GearCategory = 'camera' | 'lens' | 'lighting' | 'modifier' | 'backdrop' | 'props';

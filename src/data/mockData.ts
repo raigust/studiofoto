@@ -1,10 +1,43 @@
-import { ServicePackage, PortfolioItem, Booking, DaySchedule, StudioSettings, StudioGear, StudioExpense } from '../types';
+import { ServicePackage, PortfolioItem, Booking, DaySchedule, StudioSettings, StudioGear, StudioExpense, HeroCardItem } from '../types';
 
-export const HERO_STUDIO_IMAGE = '/src/assets/images/diafera_hero_studio_1791366216457.jpg';
-export const WISUDA_PORTFOLIO_IMAGE = '/src/assets/images/diafera_portfolio_wisuda_1791366242072.jpg';
-export const PERNIKAHAN_PORTFOLIO_IMAGE = '/src/assets/images/diafera_portfolio_pernikahan_1791366259338.jpg';
-export const PRODUK_PORTFOLIO_IMAGE = '/src/assets/images/diafera_portfolio_produk_1791366279700.jpg';
-export const EVENT_PORTFOLIO_IMAGE = '/src/assets/images/diafera_portfolio_event_1791366298516.jpg';
+export const HERO_STUDIO_IMAGE = 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=2670&auto=format&fit=crop';
+export const WISUDA_PORTFOLIO_IMAGE = '/images/diafera_portfolio_wisuda_1791366242072.jpg';
+export const PERNIKAHAN_PORTFOLIO_IMAGE = '/images/diafera_portfolio_pernikahan_1791366259338.jpg';
+export const PRODUK_PORTFOLIO_IMAGE = '/images/diafera_portfolio_produk_1791366279700.jpg';
+export const EVENT_PORTFOLIO_IMAGE = '/images/diafera_portfolio_event_1791366298516.jpg';
+
+export const DEFAULT_HERO_CARDS: HeroCardItem[] = [
+  {
+    id: 'hero-card-1',
+    title: 'Studio Space & Setup',
+    concept: 'Private Room',
+    imageUrl: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=1200&auto=format&fit=crop',
+  },
+  {
+    id: 'hero-card-2',
+    title: 'Graduation Session',
+    concept: 'Wisuda & Drapery',
+    imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=1200&auto=format&fit=crop',
+  },
+  {
+    id: 'hero-card-3',
+    title: 'Family & Group',
+    concept: 'Minimalist Family',
+    imageUrl: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?q=80&w=1200&auto=format&fit=crop',
+  },
+  {
+    id: 'hero-card-4',
+    title: 'Commercial & Editorial',
+    concept: 'Still Life & Brand',
+    imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop',
+  },
+  {
+    id: 'hero-card-5',
+    title: 'Personal & Portrait',
+    concept: 'Fine Art Light',
+    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1200&auto=format&fit=crop',
+  },
+];
 
 export const DEFAULT_STUDIO_SETTINGS: StudioSettings = {
   studioName: 'Diaferastudio',
@@ -20,6 +53,7 @@ export const DEFAULT_STUDIO_SETTINGS: StudioSettings = {
   adminName: 'Raihan Gusti',
   adminRole: 'Lead Photographer & Studio Director',
   heroBackgroundImageUrl: HERO_STUDIO_IMAGE,
+  heroCards: DEFAULT_HERO_CARDS,
 };
 
 export const STANDARD_SLOT_TEMPLATES = [
