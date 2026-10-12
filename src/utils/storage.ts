@@ -115,9 +115,9 @@ export const saveStoredExpenses = (expenses: StudioExpense[]) => {
 
 export const getStoredAdminTheme = (): 'light' | 'dark' => {
   try {
-    return (localStorage.getItem(STORAGE_KEYS.ADMIN_THEME) as 'light' | 'dark') || 'light';
+    return (localStorage.getItem(STORAGE_KEYS.ADMIN_THEME) as 'light' | 'dark') || 'dark';
   } catch {
-    return 'light';
+    return 'dark';
   }
 };
 

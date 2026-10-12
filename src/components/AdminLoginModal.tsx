@@ -107,30 +107,30 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
         transition={{ type: 'spring', stiffness: 350, damping: 28 }}
-        className="relative w-full max-w-md rounded-3xl bg-zinc-950/95 border border-white/15 shadow-[0_25px_70px_rgba(0,0,0,0.8)] overflow-hidden"
+        className="relative w-full max-w-md rounded-xl bg-[#0c0c0c] border border-neutral-800 shadow-[0_25px_70px_rgba(0,0,0,0.9)] overflow-hidden"
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-white/[0.02]">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-neutral-800 bg-[#0a0a0a]">
           <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-lime-400" />
-            <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-white">
+            <Shield className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-mono font-bold tracking-wider uppercase text-neutral-200">
               SISTEM AUTENTIKASI PENGELOLA
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full bg-white/5 hover:bg-white/15 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            className="p-1 rounded-md text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <form onSubmit={handleLogin} className="p-6 space-y-5">
+        <form onSubmit={handleLogin} className="p-5 space-y-4">
           
           {/* Admin Avatar Banner */}
-          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white/[0.03] border border-white/10">
-            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-lime-400 shrink-0 bg-zinc-800">
+          <div className="flex items-center gap-3.5 p-3 rounded-lg bg-[#141414] border border-neutral-800">
+            <div className="w-11 h-11 rounded-lg overflow-hidden border border-neutral-700 shrink-0 bg-neutral-900">
               <img
                 src={profile.avatarUrl}
                 alt={profile.name}
@@ -138,17 +138,17 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               />
             </div>
             <div className="overflow-hidden flex-1">
-              <span className="text-[10px] font-mono uppercase text-lime-400 font-bold block">
+              <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold block">
                 AKUN TERVERIFIKASI
               </span>
               <p className="font-bold text-sm text-white truncate">{profile.name}</p>
-              <p className="text-[11px] text-zinc-400 truncate">{profile.role}</p>
+              <p className="text-[11px] text-neutral-400 truncate">{profile.role}</p>
             </div>
           </div>
 
           {/* Lockout banner if active */}
           {isLockedOut && (
-            <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5">
+            <div className="p-3.5 rounded-lg bg-rose-500/10 border border-rose-500/25 text-rose-300 text-xs flex items-start gap-2.5">
               <Clock className="w-4 h-4 shrink-0 mt-0.5 text-rose-400 animate-spin" />
               <div>
                 <p className="font-bold text-white">Akses Ditangguhkan Sementara</p>
@@ -162,12 +162,12 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs">
-              <label className="font-medium text-zinc-300 flex items-center gap-1.5">
-                <Key className="w-3.5 h-3.5 text-lime-400" />
+              <label className="font-medium text-neutral-300 flex items-center gap-1.5">
+                <Key className="w-3.5 h-3.5 text-emerald-400" />
                 <span>Password / PIN Admin</span>
               </label>
-              <span className="text-[10px] font-mono text-zinc-500">
-                Sisa kesempatan: <span className="font-bold text-zinc-300">{attemptsStatus.remainingAttempts}</span>/5
+              <span className="text-[10px] font-mono text-neutral-400">
+                Sisa: <span className="font-bold text-white">{attemptsStatus.remainingAttempts}</span>/5
               </span>
             </div>
 
@@ -182,12 +182,12 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                   if (error) setError('');
                 }}
                 autoFocus
-                className="w-full pl-4 pr-10 py-2.5 rounded-2xl bg-white/[0.04] border border-white/10 text-xs text-white focus:outline-none focus:border-lime-400/60 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="w-full pl-3.5 pr-10 py-2.5 rounded-lg bg-[#141414] border border-neutral-800 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-neutral-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white p-1 cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1 cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
               </button>
@@ -199,9 +199,9 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 <span>{error}</span>
               </p>
             ) : (
-              <p className="text-[10px] text-zinc-500 flex items-center justify-between pt-0.5">
-                <span>Default PIN: <strong className="font-mono text-lime-400">admin123</strong></span>
-                <span className="italic">Bisa diubah di menu Pengaturan Studio</span>
+              <p className="text-[10px] text-neutral-400 flex items-center justify-between pt-0.5">
+                <span>Default PIN: <strong className="font-mono text-neutral-200">admin123</strong></span>
+                <span className="text-neutral-500">Bisa diubah di Pengaturan</span>
               </p>
             )}
           </div>
@@ -210,7 +210,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             <button
               type="submit"
               disabled={isLockedOut}
-              className="w-full py-2.5 rounded-full bg-lime-300 hover:bg-lime-200 text-zinc-950 font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-2.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <span>Verifikasi & Masuk Dashboard</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -220,7 +220,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               type="button"
               disabled={isLockedOut}
               onClick={handleQuickDemoLogin}
-              className="w-full py-2 rounded-full bg-white/5 hover:bg-white/10 text-zinc-300 text-xs font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer border border-white/5 disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-full py-2 rounded-lg bg-[#141414] hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs font-medium transition-colors flex items-center justify-center gap-2 cursor-pointer border border-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
               <span>Demo Login 1-Klik (Khusus Pengembang)</span>

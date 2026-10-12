@@ -31,6 +31,7 @@ import {
   FolderOpen,
   DollarSign,
   TrendingUp,
+  TrendingDown,
   Sliders,
   Send,
   UserCheck,
@@ -57,6 +58,7 @@ import {
   ShieldCheck,
   Image as ImageIcon,
   Link as LinkIcon,
+  Printer,
   Layers,
   RotateCcw,
 } from 'lucide-react';
@@ -525,6 +527,18 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
       .reduce((acc, curr) => acc + (curr.paymentStatus === 'PAID_FULL' ? curr.totalPrice : curr.dpAmount), 0);
   }, [bookings]);
 
+  const dpTotal = useMemo(() => {
+    return bookings
+      .filter((b) => (b.status === 'APPROVED' || b.status === 'COMPLETED') && b.paymentStatus !== 'PAID_FULL')
+      .reduce((acc, curr) => acc + curr.dpAmount, 0);
+  }, [bookings]);
+
+  const paidTotal = useMemo(() => {
+    return bookings
+      .filter((b) => (b.status === 'APPROVED' || b.status === 'COMPLETED') && b.paymentStatus === 'PAID_FULL')
+      .reduce((acc, curr) => acc + curr.totalPrice, 0);
+  }, [bookings]);
+
   const totalExpenses = useMemo(() => {
     return expenses.reduce((acc, curr) => acc + curr.amount, 0);
   }, [expenses]);
@@ -832,13 +846,27 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
     if (taskPage > totalTaskPages) setTaskPage(Math.max(1, totalTaskPages));
   }, [tasks.length, totalTaskPages, taskPage]);
 
-  // Theme styling helpers based on adminTheme ('light' vs 'dark')
+  // Live digital clock for topbar and header
+  const [currentClock, setCurrentClock] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentClock(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Theme styling helpers based on adminTheme ('light' vs 'dark') - Default is Pure Pitch-Black
   const isLight = adminTheme === 'light';
-  const containerBg = isLight ? 'bg-[#f4f5f7] text-[#18181b]' : 'bg-[#09090b] text-[#f4f4f5]';
-  const cardBg = isLight ? 'bg-white border-zinc-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]' : 'bg-zinc-900/60 border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.4)]';
-  const sidebarBg = isLight ? 'bg-white border-zinc-200 shadow-sm' : 'bg-zinc-950/80 border-white/10';
-  const textMuted = isLight ? 'text-zinc-500' : 'text-zinc-400';
-  const inputBg = isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-900' : 'bg-white/[0.04] border-white/10 text-white';
+  const containerBg = isLight ? 'bg-neutral-100 text-neutral-900' : 'bg-black text-white';
+  const cardBg = isLight
+    ? 'bg-white border-neutral-200 shadow-sm'
+    : 'bg-[#0a0a0a] border-neutral-800/80 shadow-none';
+  const sidebarBg = isLight
+    ? 'bg-white border-neutral-200 shadow-sm'
+    : 'bg-[#000000] border-neutral-850';
+  const textMuted = isLight ? 'text-neutral-500' : 'text-neutral-400';
+  const inputBg = isLight
+    ? 'bg-neutral-100 border-neutral-200 text-neutral-900 focus:border-neutral-400'
+    : 'bg-[#111111] border-neutral-800 text-neutral-100 placeholder-neutral-500 focus:border-neutral-600';
+  const borderSubtle = isLight ? 'border-neutral-200' : 'border-neutral-800/80';
 
   // Helper Pagination Component
   const renderPagination = (
@@ -854,10 +882,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
     const endIdx = Math.min(currentPage * itemsPerPage, totalItems);
 
     return (
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-zinc-200/60 dark:border-white/10 text-xs">
-        <div className="text-zinc-500 dark:text-zinc-400 font-mono text-[11px]">
-          Menampilkan <span className="font-bold text-zinc-900 dark:text-white">{startIdx}–{endIdx}</span> dari{' '}
-          <span className="font-bold text-zinc-900 dark:text-white">{totalItems}</span> {label}
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t ${borderSubtle} text-xs`}>
+        <div className="text-neutral-400 font-mono text-[11px]">
+          Menampilkan <span className="font-bold text-neutral-200">{startIdx}–{endIdx}</span> dari{' '}
+          <span className="font-bold text-neutral-200">{totalItems}</span> {label}
         </div>
 
         <div className="flex items-center gap-1.5 self-end sm:self-auto">
@@ -868,10 +896,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               onPageChange(Math.max(1, currentPage - 1));
             }}
             disabled={currentPage === 1}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
+            className={`px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
               isLight
-                ? 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100'
-                : 'border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10'
+                ? 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100'
+                : 'border-neutral-800 bg-[#111111] text-neutral-300 hover:bg-neutral-800 hover:text-white'
             }`}
           >
             &larr; Prev
@@ -887,7 +915,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               ) {
                 if (p === 2 || p === totalPages - 1) {
                   return (
-                    <span key={p} className="px-1 text-zinc-400 text-xs font-mono">
+                    <span key={p} className="px-1 text-slate-500 text-xs font-mono">
                       &bull;
                     </span>
                   );
@@ -903,12 +931,12 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                     sounds.playSeatClickSound();
                     onPageChange(p);
                   }}
-                  className={`w-7 h-7 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                     currentPage === p
-                      ? 'bg-lime-300 text-zinc-950 shadow-sm font-extrabold'
+                      ? 'bg-white text-black shadow-sm font-bold'
                       : isLight
-                      ? 'text-zinc-600 hover:bg-zinc-100'
-                      : 'text-zinc-400 hover:bg-white/10 hover:text-white'
+                      ? 'text-neutral-600 hover:bg-neutral-100'
+                      : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'
                   }`}
                 >
                   {p}
@@ -924,10 +952,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               onPageChange(Math.min(totalPages, currentPage + 1));
             }}
             disabled={currentPage === totalPages}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
+            className={`px-2.5 py-1 rounded-md border text-xs font-medium flex items-center gap-1 transition-all cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
               isLight
-                ? 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100'
-                : 'border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10'
+                ? 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100'
+                : 'border-neutral-800 bg-[#111111] text-neutral-300 hover:bg-neutral-800 hover:text-white'
             }`}
           >
             Next &rarr;
@@ -937,385 +965,369 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
     );
   };
 
-  const renderSidebarContent = (isMobile = false) => (
-    <>
-      {/* Top Header & Admin Profile (Fixed at top) */}
-      <div className="space-y-3 shrink-0 pb-3 border-b border-zinc-200/60 dark:border-white/10">
-        {/* Logo / Brand Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-400 to-lime-300 flex items-center justify-center text-black font-extrabold shadow-sm">
-              <Camera className="w-4 h-4 stroke-[2.5]" />
+  const renderSidebarContent = (isMobile = false) => {
+    const navItemClass = (isActive: boolean) =>
+      `w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+        isActive
+          ? isLight
+            ? 'bg-neutral-900 text-white font-semibold shadow-sm'
+            : 'bg-neutral-900 text-white font-semibold border border-neutral-750 shadow-none'
+          : isLight
+          ? 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+          : 'text-neutral-400 hover:bg-neutral-900/50 hover:text-neutral-200'
+      }`;
+
+    return (
+      <>
+        {/* Top Header & Brand (Pinned top) */}
+        <div className={`space-y-3 shrink-0 pb-3 border-b ${borderSubtle}`}>
+          {/* Logo / Brand Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-neutral-900 border border-neutral-800 flex items-center justify-center text-white font-bold shrink-0">
+                <Camera className="w-4 h-4 stroke-[2.2]" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className={`font-bold text-xs tracking-wider uppercase truncate ${isLight ? 'text-neutral-900' : 'text-white'}`}>
+                    DIAFERA STUDIO
+                  </span>
+                  <span className="text-[9px] font-mono tracking-wider px-1.5 py-0.2 rounded bg-neutral-900 text-neutral-300 border border-neutral-800 font-semibold shrink-0">
+                    ADMIN
+                  </span>
+                </div>
+                <p className={`text-[10px] tracking-wide font-mono ${textMuted} mt-0.5 truncate`}>
+                  EXECUTIVE CONSOLE
+                </p>
+              </div>
             </div>
-            <div>
-              <span className={`font-serif text-lg font-bold tracking-tight ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                Diafera
-              </span>
-              <span className="text-[10px] font-mono tracking-widest text-lime-600 dark:text-lime-400 font-bold ml-1">
-                PRO
-              </span>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={onBackToCustomerSite}
+                title="Kembali ke Web Publik"
+                className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                  isLight ? 'border-neutral-200 text-neutral-600 hover:bg-neutral-100' : 'border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-900'
+                }`}
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+              </button>
+
+              {isMobile && (
+                <button
+                  type="button"
+                  onClick={() => setMobileSidebarOpen(false)}
+                  className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                    isLight ? 'border-neutral-200 text-neutral-600 hover:bg-neutral-100' : 'border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-900'
+                  }`}
+                  title="Tutup Menu"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {/* Back to customer site */}
+          {/* Admin Executive Profile Card */}
+          <div
+            onClick={() => {
+              sounds.playSeatClickSound();
+              setActiveNav('profile');
+              if (isMobile) setMobileSidebarOpen(false);
+            }}
+            className={`p-2.5 rounded-lg border flex items-center gap-2.5 ${cardBg} cursor-pointer hover:border-neutral-700 transition-all group`}
+            title="Klik untuk ubah profil, data & keamanan admin"
+          >
+            <div className="w-8 h-8 rounded-md overflow-hidden border border-neutral-800 shrink-0 bg-neutral-900 relative">
+              <img
+                src={adminProfile.avatarUrl || HERO_STUDIO_IMAGE}
+                alt="Admin Profile"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+              />
+            </div>
+            <div className="overflow-hidden flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <p className={`text-xs font-semibold truncate ${isLight ? 'text-neutral-900' : 'text-neutral-100'}`}>
+                  {adminProfile.name || studioSettings.adminName || 'Raihan Gusti'}
+                </p>
+                <Edit2 className="w-3 h-3 text-neutral-400 opacity-60 group-hover:opacity-100 transition-opacity shrink-0" />
+              </div>
+              <p className={`text-[10px] truncate ${textMuted}`}>
+                {adminProfile.role || studioSettings.adminRole || 'Studio Director & Lead'}
+              </p>
+              <div className="flex items-center gap-1.5 text-[9px] font-mono text-emerald-400 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>Super Admin · Aktif</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Categorized Scrollable Nav Items */}
+        <nav className="flex-1 overflow-y-auto min-h-0 space-y-4 text-xs font-medium py-3 pr-1 scrollbar-thin">
+          
+          {/* SECTION 1: IKHTISAR UTAMA */}
+          <div className="space-y-1">
+            <p className="px-3 text-[10px] font-mono tracking-wider text-neutral-500 uppercase font-semibold">
+              Ikhtisar Utama
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('dashboard');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'dashboard')}
+            >
+              <div className="flex items-center gap-2.5">
+                <Shield className="w-4 h-4" />
+                <span>Ringkasan Eksekutif</span>
+              </div>
+              {pendingBookings.length > 0 && (
+                <span className="px-1.5 py-0.5 text-[10px] font-mono font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  {pendingBookings.length}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('calendar');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'calendar')}
+            >
+              <div className="flex items-center gap-2.5">
+                <CalendarIcon className="w-4 h-4" />
+                <span>Jadwal & Alokasi Slot</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('transactions');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'transactions')}
+            >
+              <div className="flex items-center gap-2.5">
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Transaksi & Kas</span>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-400 font-semibold">
+                Rp {(totalRevenue / 1000).toLocaleString('id-ID')}k
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('clients');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'clients')}
+            >
+              <div className="flex items-center gap-2.5">
+                <UserCheck className="w-4 h-4" />
+                <span>Direktori Klien (CRM)</span>
+              </div>
+              <span className={`text-[10px] font-mono ${textMuted}`}>{clientDirectory.length}</span>
+            </button>
+          </div>
+
+          {/* SECTION 2: OPERASIONAL PRODUKSI */}
+          <div className="space-y-1">
+            <p className="px-3 text-[10px] font-mono tracking-wider text-neutral-500 uppercase font-semibold">
+              Operasional Produksi
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('delivery');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'delivery')}
+            >
+              <div className="flex items-center gap-2.5">
+                <HardDrive className="w-4 h-4" />
+                <span>Delivery Link G-Drive</span>
+              </div>
+              <span className="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-neutral-900 text-neutral-300 border border-neutral-800">
+                Drive
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('inventory');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'inventory')}
+            >
+              <div className="flex items-center gap-2.5">
+                <Wrench className="w-4 h-4" />
+                <span>Inventaris Alat</span>
+              </div>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800">
+                {gearList.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('tasks');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'tasks')}
+            >
+              <div className="flex items-center gap-2.5">
+                <CheckSquare className="w-4 h-4" />
+                <span>Agenda & Tugas Tim</span>
+              </div>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800">
+                {tasks.filter((t) => !t.isCompleted).length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('quote_calc');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'quote_calc')}
+            >
+              <div className="flex items-center gap-2.5">
+                <Calculator className="w-4 h-4" />
+                <span>Kalkulator Penawaran</span>
+              </div>
+              <span className="text-[10px] font-mono text-neutral-400">Estimasi</span>
+            </button>
+          </div>
+
+          {/* SECTION 3: KONTEN & SISTEM */}
+          <div className="space-y-1">
+            <p className="px-3 text-[10px] font-mono tracking-wider text-neutral-500 uppercase font-semibold">
+              Konten & Sistem
+            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('portfolio');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'portfolio')}
+            >
+              <div className="flex items-center gap-2.5">
+                <FolderOpen className="w-4 h-4" />
+                <span>Kurasi Portofolio</span>
+              </div>
+              <span className={`text-[10px] font-mono ${textMuted}`}>{portfolioItems.length}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('settings');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'settings')}
+            >
+              <div className="flex items-center gap-2.5">
+                <Sliders className="w-4 h-4" />
+                <span>Pengaturan Studio & Foto</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                sounds.playSeatClickSound();
+                setActiveNav('profile');
+                if (isMobile) setMobileSidebarOpen(false);
+              }}
+              className={navItemClass(activeNav === 'profile')}
+            >
+              <div className="flex items-center gap-2.5">
+                <User className="w-4 h-4" />
+                <span>Kredensial & Keamanan</span>
+              </div>
+              <span className="px-1.5 py-0.5 text-[9px] font-bold rounded bg-neutral-900 text-neutral-300 border border-neutral-800 font-mono">
+                Owner
+              </span>
+            </button>
+          </div>
+        </nav>
+
+        {/* Pinned Bottom Controls */}
+        <div className={`space-y-2 pt-2.5 shrink-0 border-t ${borderSubtle} mt-auto`}>
+          <div className={`px-2.5 py-1.5 rounded-lg ${cardBg} flex items-center justify-between text-[11px]`}>
+            <span className="text-neutral-400 font-mono text-[10px] flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Sesi Terproteksi</span>
+            </span>
+            <span className="text-[10px] font-mono text-emerald-400 font-bold">ONLINE</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-1.5">
             <button
               type="button"
               onClick={onBackToCustomerSite}
-              title="Kembali ke Web Customer"
-              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-                isLight ? 'border-zinc-200 text-zinc-600 hover:bg-zinc-100' : 'border-white/10 text-zinc-400 hover:text-white hover:bg-white/5'
+              className={`py-1.5 px-2 rounded-lg border text-[11px] font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer ${
+                isLight
+                  ? 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100'
+                  : 'border-neutral-800 bg-[#111111] text-neutral-300 hover:bg-neutral-800 hover:text-white'
               }`}
+              title="Kembali ke halaman publik customer"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <ExternalLink className="w-3 h-3" />
+              <span>Web Publik</span>
             </button>
-
-            {/* Mobile close drawer button */}
-            {isMobile && (
-              <button
-                type="button"
-                onClick={() => setMobileSidebarOpen(false)}
-                className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-                  isLight ? 'border-zinc-200 text-zinc-600 hover:bg-zinc-100' : 'border-white/10 text-zinc-400 hover:text-white hover:bg-white/5'
-                }`}
-                title="Tutup Menu"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={onLogout}
+              className="py-1.5 px-2 rounded-lg border border-rose-950/60 bg-rose-950/20 text-rose-400 hover:bg-rose-950/40 text-[11px] font-medium flex items-center justify-center gap-1 transition-colors cursor-pointer"
+              title="Keluar dari sesi administrator"
+            >
+              <LogOut className="w-3 h-3" />
+              <span>Keluar</span>
+            </button>
           </div>
         </div>
-
-        {/* Admin Profile Card (Interactive: Opens Profile Editor) */}
-        <div
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('profile');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`p-2.5 sm:p-3 rounded-2xl border flex items-center gap-3 ${cardBg} cursor-pointer hover:border-lime-400/50 transition-all group`}
-          title="Klik untuk ubah profil, data & keamanan admin"
-        >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-lime-400/80 shrink-0 bg-zinc-800 relative">
-            <img
-              src={adminProfile.avatarUrl || HERO_STUDIO_IMAGE}
-              alt="Admin Profile"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-            />
-          </div>
-          <div className="overflow-hidden flex-1">
-            <div className="flex items-center justify-between">
-              <p className={`text-xs font-bold truncate ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                {adminProfile.name || studioSettings.adminName || 'Raihan Gusti'}
-              </p>
-              <Edit2 className="w-3 h-3 text-lime-500 opacity-60 group-hover:opacity-100 transition-opacity shrink-0" />
-            </div>
-            <p className={`text-[10px] truncate ${textMuted}`}>
-              {adminProfile.role || studioSettings.adminRole || 'Lead Photographer'}
-            </p>
-            <span className="inline-flex items-center gap-1 text-[9px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Online &bull; Edit Profil
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Middle: Scrollable Nav Items (Scrolls internally if viewport is small, header and logout button stay 100% pinned!) */}
-      <nav className="flex-1 overflow-y-auto min-h-0 space-y-1 text-xs font-medium py-2.5 pr-1 scrollbar-thin">
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('dashboard');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'dashboard'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <Shield className="w-4 h-4" />
-            <span>Dashboard</span>
-          </div>
-          {pendingBookings.length > 0 && (
-            <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-orange-500 text-white">
-              {pendingBookings.length}
-            </span>
-          )}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('calendar');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'calendar'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <CalendarIcon className="w-4 h-4" />
-            <span>Jadwal & Kuota Bioskop</span>
-          </div>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('inventory');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'inventory'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <Wrench className="w-4 h-4" />
-            <span>Inventaris Alat & Gear</span>
-          </div>
-          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${isLight ? 'bg-zinc-200 text-zinc-700' : 'bg-white/10 text-zinc-400'}`}>
-            {gearList.length}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('delivery');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'delivery'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <HardDrive className="w-4 h-4" />
-            <span>Delivery & Drive Link</span>
-          </div>
-          <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-sky-500 text-white">
-            Drive
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('quote_calc');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'quote_calc'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <Calculator className="w-4 h-4" />
-            <span>Kalkulator & WA Broadcast</span>
-          </div>
-          <span className="text-[10px] font-mono text-lime-500 font-bold">Auto</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('tasks');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'tasks'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <CheckSquare className="w-4 h-4" />
-            <span>Studio To-Do List</span>
-          </div>
-          <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${isLight ? 'bg-zinc-200 text-zinc-700' : 'bg-white/10 text-zinc-400'}`}>
-            {tasks.filter((t) => !t.isCompleted).length}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('clients');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'clients'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <UserCheck className="w-4 h-4" />
-            <span>Direktori Klien (CRM)</span>
-          </div>
-          <span className={`text-[10px] font-mono ${textMuted}`}>{clientDirectory.length}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('transactions');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'transactions'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>Laporan & Kas Studio</span>
-          </div>
-          <span className={`text-[10px] font-mono text-emerald-500 font-bold`}>
-            Rp {(netProfit / 1000).toLocaleString('id-ID')}k
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('portfolio');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'portfolio'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <FolderOpen className="w-4 h-4" />
-            <span>CRUD Portofolio</span>
-          </div>
-          <span className={`text-[10px] font-mono ${textMuted}`}>{portfolioItems.length}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('profile');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'profile'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <User className="w-4 h-4" />
-            <span>Profil & Keamanan Admin</span>
-          </div>
-          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-lime-400/20 text-lime-600 dark:text-lime-400 font-mono">
-            Owner
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            sounds.playSeatClickSound();
-            setActiveNav('settings');
-            if (isMobile) setMobileSidebarOpen(false);
-          }}
-          className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all cursor-pointer ${
-            activeNav === 'settings'
-              ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm'
-              : isLight
-              ? 'text-zinc-600 hover:bg-zinc-100'
-              : 'text-zinc-400 hover:bg-white/5 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <Sliders className="w-4 h-4" />
-            <span>Pengaturan Studio</span>
-          </div>
-        </button>
-      </nav>
-
-      {/* Bottom Pinned Controls (ALWAYS VISIBLE & PINNED AT BOTTOM, ZERO SCROLLING NEEDED!) */}
-      <div className="space-y-2 pt-2.5 shrink-0 border-t border-zinc-200/60 dark:border-white/10 mt-auto">
-        <div className={`px-3 py-2 rounded-xl ${cardBg} flex items-center justify-between text-[11px]`}>
-          <span className="font-semibold flex items-center gap-1.5">
-            <HardDrive className="w-3.5 h-3.5 text-lime-500" />
-            <span>Drive Cloud Sync</span>
-          </span>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-        </div>
-
-        <button
-          type="button"
-          onClick={onLogout}
-          className={`w-full py-2.5 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold transition-all shadow-sm cursor-pointer ${
-            isLight
-              ? 'border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 hover:border-rose-300'
-              : 'border-rose-500/30 bg-rose-950/20 text-rose-400 hover:bg-rose-950/40 hover:border-rose-500/50'
-          }`}
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Keluar Akun Admin</span>
-        </button>
-      </div>
-    </>
-  );
+      </>
+    );
+  };
 
   if (!isSessionValid) {
     return (
       <div className={`h-screen w-full ${containerBg} flex items-center justify-center p-6 text-center font-sans`}>
-        <div className={`max-w-md w-full p-8 rounded-3xl border ${cardBg} shadow-2xl space-y-5 border-rose-500/30`}>
-          <div className="w-16 h-16 rounded-3xl bg-rose-500/20 text-rose-500 flex items-center justify-center mx-auto border border-rose-500/30">
-            <Lock className="w-8 h-8" />
+        <div className={`max-w-md w-full p-6 sm:p-8 rounded-xl border ${cardBg} shadow-2xl space-y-5 border-rose-900/40 bg-[#0a0a0a]`}>
+          <div className="w-14 h-14 rounded-xl bg-rose-950/40 text-rose-400 flex items-center justify-center mx-auto border border-rose-900/50">
+            <Lock className="w-7 h-7" />
           </div>
           <div>
-            <span className="text-[10px] font-mono font-bold tracking-widest text-rose-500 uppercase">
+            <span className="text-[10px] font-mono font-bold tracking-widest text-rose-400 uppercase">
               SISTEM KEAMANAN DIAFERA PRO
             </span>
-            <h2 className="text-xl font-bold text-zinc-900 dark:text-white mt-1">
+            <h2 className="text-xl font-bold text-white mt-1">
               Akses Ditolak: Autentikasi Diperlukan
             </h2>
             <p className={`text-xs ${textMuted} mt-2 leading-relaxed`}>
@@ -1329,18 +1341,16 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 onLogout();
                 window.location.hash = '#admin';
               }}
-              className="w-full py-3 rounded-full bg-lime-300 hover:bg-lime-200 text-zinc-950 font-bold text-xs transition-colors shadow-sm cursor-pointer"
+              className="w-full py-2.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs transition-colors shadow-sm cursor-pointer"
             >
-              Masuk Sebagai Admin
+              Masuk Sebagai Administrator
             </button>
             <button
               type="button"
               onClick={onBackToCustomerSite}
-              className={`w-full py-2.5 rounded-full border text-xs font-medium transition-colors cursor-pointer ${
-                isLight ? 'border-zinc-300 text-zinc-700 hover:bg-zinc-100' : 'border-white/10 text-zinc-400 hover:text-white hover:bg-white/5'
-              }`}
+              className="w-full py-2.5 rounded-lg border border-neutral-800 bg-[#121212] text-neutral-300 hover:text-white hover:bg-neutral-800 text-xs font-medium transition-colors cursor-pointer"
             >
-              Kembali ke Web Customer
+              Kembali ke Web Publik
             </button>
           </div>
         </div>
@@ -1348,32 +1358,80 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
     );
   }
 
+  // Active navigation metadata
+  const navTitles: Record<typeof activeNav, { title: string; subtitle: string }> = {
+    dashboard: {
+      title: 'Ringkasan Eksekutif & Operasional',
+      subtitle: 'Pemantauan real-time alokasi jadwal studio, verifikasi pembayaran, dan logistik pengiriman karya.',
+    },
+    calendar: {
+      title: 'Manajemen Jadwal & Alokasi Slot',
+      subtitle: 'Konfigurasi ketersediaan tanggal, kuota harian, penguncian jam pemotretan, dan status operasional.',
+    },
+    inventory: {
+      title: 'Inventaris & Peralatan Studio',
+      subtitle: 'Pelacakan kamera, lensa GM, lighting Profoto, kondisi baterai, dan jadwal perawatan alat.',
+    },
+    delivery: {
+      title: 'Pelacakan Pengiriman Karya & Drive',
+      subtitle: 'Status pasca-produksi: shooting selesai, color grading, review kurasi, hingga pengiriman Google Drive.',
+    },
+    quote_calc: {
+      title: 'Kalkulator Penawaran & Estimasi Biaya',
+      subtitle: 'Perhitungan simulasi paket custom, add-on studio, durasi ekstra, dan pembuatan draf penawaran WhatsApp.',
+    },
+    tasks: {
+      title: 'Agenda & Manajemen Tugas Studio',
+      subtitle: 'Daftar prioritas tugas harian tim: shooting prep, color grading, cetak album, dan backup data mentah.',
+    },
+    clients: {
+      title: 'Direktori & Database Pelanggan (CRM)',
+      subtitle: 'Rekam jejak pemesanan klien, total kontribusi omzet, riwayat sesi foto, dan tautan komunikasi WhatsApp.',
+    },
+    transactions: {
+      title: 'Verifikasi Transaksi & Reservasi',
+      subtitle: 'Pemeriksaan bukti transfer DP, konfirmasi pembayaran lunas, cetak kwitansi, dan ekspor CSV.',
+    },
+    portfolio: {
+      title: 'Kurasi & Manajemen Portofolio',
+      subtitle: 'Pengelolaan visual showcase karya studio: Wisuda, Pernikahan, Foto Produk, dan Editorial Portrait.',
+    },
+    settings: {
+      title: 'Konfigurasi Studio & Tampilan',
+      subtitle: 'Pengaturan identitas studio, rekening bank pembayaran, background 4K, dan 5 tautan foto showcase.',
+    },
+    profile: {
+      title: 'Profil Administrator & Keamanan Akses',
+      subtitle: 'Perubahan kredensial login, kata sandi, batas waktu sesi aktif, dan rekam audit keamanan.',
+    },
+  };
+
   return (
     <div className={`h-screen w-full ${containerBg} transition-colors duration-300 flex flex-col md:flex-row overflow-hidden font-sans`}>
       
-      {/* MOBILE TOP BAR (For small screens: Hamburger + Brand + Quick Logout) */}
+      {/* MOBILE TOP BAR */}
       <header className={`md:hidden px-4 py-3 border-b flex items-center justify-between shrink-0 z-30 ${sidebarBg}`}>
         <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={() => setMobileSidebarOpen(true)}
-            className={`p-2 rounded-xl border cursor-pointer ${
-              isLight ? 'border-zinc-200 bg-zinc-100 text-zinc-800' : 'border-white/10 bg-white/5 text-white'
+            className={`p-2 rounded-lg border cursor-pointer ${
+              isLight ? 'border-slate-200 bg-slate-100 text-slate-800' : 'border-slate-800 bg-slate-900 text-white'
             }`}
             aria-label="Buka Menu Admin"
           >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-amber-400 to-lime-300 flex items-center justify-center text-black font-extrabold text-xs">
-              <Camera className="w-3.5 h-3.5 stroke-[2.5]" />
+            <div className="w-7 h-7 rounded-lg bg-slate-900 border border-slate-700/80 flex items-center justify-center text-white font-bold text-xs">
+              <Camera className="w-3.5 h-3.5 stroke-[2.2]" />
             </div>
             <div>
-              <span className={`font-serif text-sm font-bold tracking-tight ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                Diafera
+              <span className={`font-semibold text-xs tracking-wider uppercase ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                DIAFERA STUDIO
               </span>
-              <span className="text-[9px] font-mono tracking-widest text-lime-600 dark:text-lime-400 font-bold ml-1">
-                PRO
+              <span className="text-[9px] font-mono tracking-widest text-slate-400 font-semibold ml-1">
+                ADMIN
               </span>
             </div>
           </div>
@@ -1383,9 +1441,9 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
           <button
             type="button"
             onClick={onBackToCustomerSite}
-            title="Kembali ke Web Customer"
+            title="Kembali ke Web Publik"
             className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-              isLight ? 'border-zinc-200 text-zinc-600 hover:bg-zinc-100' : 'border-white/10 text-zinc-400 hover:text-white'
+              isLight ? 'border-slate-200 text-slate-600 hover:bg-slate-100' : 'border-slate-800 text-slate-400 hover:text-white'
             }`}
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -1394,7 +1452,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
             type="button"
             onClick={onLogout}
             title="Keluar Akun Admin"
-            className="px-2.5 py-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 text-rose-500 text-xs font-bold flex items-center gap-1.5 cursor-pointer hover:bg-rose-500/20 transition-colors"
+            className="px-2.5 py-1.5 rounded-lg border border-rose-900/40 bg-rose-950/20 text-rose-400 text-xs font-semibold flex items-center gap-1.5 cursor-pointer hover:bg-rose-950/40 transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Keluar</span>
@@ -1406,483 +1464,521 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileSidebarOpen(false)}
           />
           <aside
-            className={`relative w-72 max-w-[85vw] h-full flex flex-col justify-between p-4 z-10 shadow-2xl border-r border-zinc-200 dark:border-white/10 ${sidebarBg}`}
+            className={`relative w-72 max-w-[85vw] h-full flex flex-col justify-between p-4 z-10 shadow-2xl border-r ${borderSubtle} ${sidebarBg}`}
           >
             {renderSidebarContent(true)}
           </aside>
         </div>
       )}
 
-      {/* DESKTOP FIXED SIDEBAR (Permanently fixed height, left side, bottom logout always visible!) */}
+      {/* DESKTOP FIXED SIDEBAR */}
       <aside className={`hidden md:flex h-full w-64 lg:w-72 border-r flex-col justify-between p-4 lg:p-5 shrink-0 overflow-hidden z-20 select-none ${sidebarBg}`}>
         {renderSidebarContent(false)}
       </aside>
 
-      {/* 
-        MAIN CONTENT WORKSPACE (Right Panel independently scrollable)
-      */}
-      <main className="flex-1 h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-7 scrollbar-thin">
+      {/* MAIN CONTENT WORKSPACE */}
+      <main className="flex-1 h-full overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 scrollbar-thin">
         
-        {/* Top App Bar inside Dashboard */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Top App Command Bar (Unified & Uncluttered) */}
+        <div className={`p-3.5 sm:p-4 rounded-xl border ${cardBg} flex flex-col md:flex-row md:items-center justify-between gap-3.5`}>
           
-          {/* Service quick chips (UX/UI design, Illustration, Typography in the photo) */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
-            {['Semua Layanan', 'Wisuda', 'Produk', 'Pernikahan', 'Event & Portrait'].map((chip, i) => (
-              <span
-                key={i}
-                className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap cursor-pointer transition-colors ${
-                  i === 0
-                    ? isLight
-                      ? 'bg-zinc-900 text-white'
-                      : 'bg-white text-zinc-900 font-semibold'
-                    : isLight
-                    ? 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100'
-                    : 'bg-white/5 text-zinc-400 border border-white/10 hover:text-white'
-                }`}
-              >
-                {chip}
+          {/* Breadcrumb & Live Digital Master Clock */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs text-neutral-400 font-medium">
+              <span>Diafera Admin</span>
+              <span className="text-neutral-600">/</span>
+              <span className="font-semibold text-white">
+                {navTitles[activeNav]?.title || 'Ringkasan'}
               </span>
-            ))}
+            </div>
+            <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-emerald-400 font-medium">LIVE</span>
+              <span>&bull;</span>
+              <span>{formatReadableDate(getTodayDateString(0))}</span>
+              <span>&bull;</span>
+              <span className="font-bold text-neutral-200">{currentClock.toLocaleTimeString('id-ID')} WIB</span>
+            </div>
           </div>
 
-          {/* Controls: Search, Light/Dark Switch, Add Walk-in button */}
-          <div className="flex items-center gap-3">
+          {/* Controls: Search & Icon Actions */}
+          <div className="flex flex-wrap items-center gap-2">
             {/* Search command input */}
-            <div className="relative w-48 sm:w-64">
+            <div className="relative w-44 sm:w-56">
               <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${textMuted}`} />
               <input
                 type="text"
-                placeholder="Cari atau ketik perintah..."
+                placeholder="Cari transaksi..."
                 value={trxSearch}
                 onChange={(e) => setTrxSearch(e.target.value)}
-                className={`w-full pl-8 pr-3 py-1.5 rounded-full text-xs focus:outline-none transition-colors ${inputBg}`}
+                className={`w-full pl-8 pr-3 py-1.5 rounded-lg text-xs focus:outline-none transition-colors ${inputBg}`}
               />
             </div>
 
-            {/* Light / Dark Mode Toggle Pill (Matching reference photo exactly!) */}
-            <div className={`p-1 rounded-full border flex items-center gap-1 ${cardBg}`}>
-              <button
-                onClick={() => toggleTheme('light')}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-medium flex items-center gap-1 transition-all ${
-                  isLight ? 'bg-lime-300 text-zinc-950 font-bold shadow-sm' : 'text-zinc-400 hover:text-white'
-                }`}
-              >
-                <Sun className="w-3 h-3" />
-                <span>Light</span>
-              </button>
-              <button
-                onClick={() => toggleTheme('dark')}
-                className={`px-2.5 py-1 rounded-full text-[11px] font-medium flex items-center gap-1 transition-all ${
-                  !isLight ? 'bg-white text-zinc-950 font-bold shadow-sm' : 'text-zinc-500 hover:text-zinc-800'
-                }`}
-              >
-                <Moon className="w-3 h-3" />
-                <span>Dark</span>
-              </button>
-            </div>
+            {/* Test Simulation Icon Button */}
+            <button
+              type="button"
+              onClick={onTriggerSimulatedBooking}
+              className="p-2 sm:px-2.5 sm:py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-colors bg-[#111111] border-neutral-800 text-amber-400 hover:bg-neutral-800 hover:text-amber-300 cursor-pointer"
+              title="Simulasi masuk booking baru untuk mengetes notifikasi & verifikasi"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span className="hidden sm:inline">Simulasi</span>
+            </button>
+
+            {/* Export CSV Icon Button */}
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              className="p-2 sm:px-2.5 sm:py-1.5 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-colors bg-[#111111] border-neutral-800 text-neutral-300 hover:bg-neutral-800 hover:text-white cursor-pointer"
+              title="Ekspor laporan transaksi (CSV)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="hidden sm:inline">Ekspor</span>
+            </button>
 
             {/* Add Walk-in / Manual Booking Button */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+            <button
+              type="button"
               onClick={() => setManualBookingModalOpen(true)}
-              className="px-4 py-2 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 text-xs font-semibold flex items-center gap-1.5 shadow-sm cursor-pointer"
+              className="px-3 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+              title="Tambah reservasi walk-in"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span className="hidden sm:inline">Tambah Booking Walk-in</span>
-              <span className="sm:hidden">Booking</span>
-            </motion.button>
+              <span>+ Booking</span>
+            </button>
           </div>
         </div>
 
         {/* ================= VIEW: MAIN DASHBOARD ================= */}
         {activeNav === 'dashboard' && (
-          <div className="space-y-7">
-            
-            {/* Top Greeting Headline (Matching reference "Hi, Michael! What do you want to learn today?") */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h1 className={`text-2xl sm:text-3xl font-extrabold tracking-tight ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                  Hi, {studioSettings.adminName?.split(' ')[0] || 'Raihan'}! 👋
-                </h1>
-                <p className={`text-sm ${textMuted} mt-1 font-light`}>
-                  Apa yang ingin Anda kelola di Diaferastudio hari ini?
-                </p>
+          <div className="space-y-5">
+
+            {/* 4 Executive KPI Cards (Pitch Black Monochrome) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              {/* Metric 1: Total Omzet */}
+              <div className={`p-4 rounded-xl border ${cardBg} space-y-2.5`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-semibold">
+                    PENDAPATAN TERVERIFIKASI
+                  </span>
+                  <div className="w-7 h-7 rounded-lg bg-[#111111] border border-neutral-800 flex items-center justify-center text-emerald-400">
+                    <DollarSign className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xl font-bold font-mono tabular-nums text-white">
+                    Rp {totalRevenue.toLocaleString('id-ID')}
+                  </p>
+                  <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-400 mt-0.5">
+                    <span>DP: Rp {(dpTotal / 1000).toLocaleString('id-ID')}k</span>
+                    <span>&bull;</span>
+                    <span>Lunas: Rp {(paidTotal / 1000).toLocaleString('id-ID')}k</span>
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-neutral-850 flex items-center justify-between text-[11px]">
+                  <span className="text-emerald-400 font-mono font-medium flex items-center gap-1">
+                    <TrendingUp className="w-3 h-3" />
+                    +18.4%
+                  </span>
+                  <span className={textMuted}>{approvedBookings.length} booking valid</span>
+                </div>
               </div>
 
-              {/* Quick simulated test button */}
-              <button
-                onClick={onTriggerSimulatedBooking}
-                className="px-3.5 py-1.5 rounded-full border text-xs font-medium flex items-center gap-1.5 self-start transition-colors bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20"
-                title="Simulasi masuk booking baru untuk mengetes notifikasi & approval"
-              >
-                <Play className="w-3 h-3 fill-current" />
-                <span>Test Booking Masuk</span>
-              </button>
-            </div>
-
-            {/* Service Categories Quick Showcase (4 cards from reference image) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {[
-                { title: 'Foto Wisuda', cat: 'wisuda', img: WISUDA_PORTFOLIO_IMAGE, count: bookings.filter((b) => b.category === 'wisuda').length },
-                { title: 'Foto Produk', cat: 'produk', img: PRODUK_PORTFOLIO_IMAGE, count: bookings.filter((b) => b.category === 'produk').length },
-                { title: 'Pernikahan Noir', cat: 'pernikahan', img: PERNIKAHAN_PORTFOLIO_IMAGE, count: bookings.filter((b) => b.category === 'pernikahan').length },
-                { title: 'Event & Portrait', cat: 'portrait', img: EVENT_PORTFOLIO_IMAGE, count: bookings.filter((b) => b.category === 'portrait' || b.category === 'event').length },
-              ].map((item, idx) => (
-                <div
-                  key={idx}
-                  className={`p-4 rounded-3xl border flex items-center gap-3.5 transition-all ${cardBg}`}
-                >
-                  <div className="w-12 h-12 rounded-2xl overflow-hidden shrink-0 border border-black/10">
-                    <img src={item.img} alt={item.title} className="w-full h-full object-cover" />
+              {/* Metric 2: Total Booking */}
+              <div className={`p-4 rounded-xl border ${cardBg} space-y-2.5`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-semibold">
+                    TOTAL RESERVASI SESI
+                  </span>
+                  <div className="w-7 h-7 rounded-lg bg-[#111111] border border-neutral-800 flex items-center justify-center text-neutral-200">
+                    <CalendarIcon className="w-3.5 h-3.5" />
                   </div>
-                  <div>
-                    <p className={`text-xs font-bold leading-tight ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                      {item.title}
+                </div>
+                <div>
+                  <p className="text-xl font-bold font-mono tabular-nums text-white">
+                    {bookings.length} <span className="text-xs font-normal text-neutral-400">Sesi</span>
+                  </p>
+                  <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-400 mt-0.5">
+                    <span className="text-amber-400">{pendingBookings.length} Menunggu</span>
+                    <span>&bull;</span>
+                    <span className="text-emerald-400">{approvedBookings.length} Disetujui</span>
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-neutral-850 flex items-center justify-between text-[11px]">
+                  <span className="text-neutral-300 font-mono font-medium">
+                    {bookings.filter((b) => b.status === 'COMPLETED').length} Selesai Sesi
+                  </span>
+                  <span className={textMuted}>Bulan Ini</span>
+                </div>
+              </div>
+
+              {/* Metric 3: Okupansi Hari Ini */}
+              <div className={`p-4 rounded-xl border ${cardBg} space-y-2.5`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-semibold">
+                    OKUPANSI HARI INI
+                  </span>
+                  <div className="w-7 h-7 rounded-lg bg-[#111111] border border-neutral-800 flex items-center justify-center text-amber-400">
+                    <Clock className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-baseline justify-between">
+                    <p className="text-xl font-bold font-mono tabular-nums text-white">
+                      {Math.round((todaysSessions.length / Math.max(1, activeDayInfo.maxCapacity || 5)) * 100)}%
                     </p>
-                    <p className={`text-[10px] ${textMuted} mt-0.5`}>
-                      {item.count} Sesi Terjadwal
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Progress Gauge Circles (40% Marketing, 60% Typography, 30% Colors in reference photo) */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className={`p-5 rounded-3xl border ${cardBg} flex items-center justify-between`}>
-                <div>
-                  <span className="text-[10px] font-mono uppercase text-orange-500 font-bold">KAPASITAS HARI INI</span>
-                  <p className={`text-xl font-extrabold mt-1 ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                    {todaysSessions.length} / {activeDayInfo.maxCapacity || 5} Slot
-                  </p>
-                  <p className={`text-xs ${textMuted} mt-0.5`}>
-                    {activeDayInfo.isClosed ? 'Studio Ditutup' : activeDayInfo.maxCapacity === 1 ? 'Mode 1 Customer Aktif' : 'Operasional Reguler'}
-                  </p>
-                </div>
-                <div className="w-14 h-14 rounded-full border-4 border-lime-400 flex items-center justify-center font-bold text-sm">
-                  {Math.round((todaysSessions.length / (activeDayInfo.maxCapacity || 5)) * 100)}%
-                </div>
-              </div>
-
-              <div className={`p-5 rounded-3xl border ${cardBg} flex items-center justify-between`}>
-                <div>
-                  <span className="text-[10px] font-mono uppercase text-emerald-500 font-bold">ESTIMASI OMSET VALID</span>
-                  <p className={`text-xl font-extrabold mt-1 ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                    Rp {(totalRevenue / 1000).toLocaleString('id-ID')}k
-                  </p>
-                  <p className={`text-xs ${textMuted} mt-0.5`}>
-                    Dari {approvedBookings.length} booking terkonfirmasi
-                  </p>
-                </div>
-                <div className="w-14 h-14 rounded-full border-4 border-emerald-400 flex items-center justify-center font-bold text-sm">
-                  85%
-                </div>
-              </div>
-
-              <div className={`p-5 rounded-3xl border ${cardBg} flex items-center justify-between`}>
-                <div>
-                  <span className="text-[10px] font-mono uppercase text-sky-500 font-bold">DELIVERY GOOGLE DRIVE</span>
-                  <p className={`text-xl font-extrabold mt-1 ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                    100% Ontime
-                  </p>
-                  <p className={`text-xs ${textMuted} mt-0.5`}>
-                    Seluruh file mentah terdistribusi
-                  </p>
-                </div>
-                <div className="w-14 h-14 rounded-full border-4 border-sky-400 flex items-center justify-center font-bold text-sm">
-                  100%
-                </div>
-              </div>
-            </div>
-
-            {/* Split Content: Main To-Do & Assignments (Left) vs Mini Calendar & Notifications (Right) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
-              
-              {/* LEFT 7-COL: To Do List & Live Incoming Bookings */}
-              <div className="lg:col-span-7 space-y-7">
-                
-                {/* To-Do List Box (Exact feature from reference photo "To do list") */}
-                <div className={`p-6 rounded-3xl border ${cardBg} space-y-4`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className={`text-base font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                        Studio To-Do List & Checklist Harian
-                      </h2>
-                      <p className={`text-xs ${textMuted}`}>
-                        Manajemen gear, color grading, dan jadwal delivery ke klien.
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => setShowAddTaskModal(true)}
-                      className="px-3 py-1.5 rounded-full bg-lime-300 text-zinc-950 font-bold text-xs flex items-center gap-1 shadow-sm"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>Tambah Task</span>
-                    </button>
-                  </div>
-
-                  <div className="space-y-2.5">
-                    {tasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
-                          task.isCompleted
-                            ? isLight ? 'bg-zinc-100/60 border-zinc-200 opacity-60' : 'bg-black/30 border-white/5 opacity-50'
-                            : isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-white/[0.02] border-white/8'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <button
-                            onClick={() => toggleTask(task.id)}
-                            className="cursor-pointer text-lime-500 hover:scale-110 transition-transform"
-                          >
-                            {task.isCompleted ? (
-                              <CheckSquare className="w-5 h-5 text-emerald-500" />
-                            ) : (
-                              <Square className="w-5 h-5" />
-                            )}
-                          </button>
-                          <div>
-                            <p className={`text-xs font-semibold ${task.isCompleted ? 'line-through' : ''}`}>
-                              {task.title}
-                            </p>
-                            <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-400 mt-0.5">
-                              <span className="uppercase text-orange-400">[{task.category}]</span>
-                              <span>&bull;</span>
-                              <span>Deadline: {task.deadline}</span>
-                              {task.assignedTo && <span>&bull; PIC: {task.assignedTo}</span>}
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => deleteTask(task.id)}
-                          className="text-zinc-400 hover:text-rose-500 p-1"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Live Incoming Approvals Queue (WhatsApp Automation) */}
-                <div className={`p-6 rounded-3xl border ${cardBg} space-y-4`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className={`text-base font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                        Antrean Approval Masuk ({pendingBookings.length})
-                      </h2>
-                      <p className={`text-xs ${textMuted}`}>
-                        Setujui untuk otomatis mengunci slot kursi bioskop & kirim konfirmasi WhatsApp.
-                      </p>
-                    </div>
-
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white">
-                      Live Queue
+                    <span className="text-xs font-mono text-neutral-400">
+                      {todaysSessions.length} / {activeDayInfo.maxCapacity || 5} Slot
                     </span>
                   </div>
+                  {/* Progress bar */}
+                  <div className="w-full h-1.5 rounded-full bg-neutral-900 mt-2 overflow-hidden border border-neutral-800">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, Math.round((todaysSessions.length / Math.max(1, activeDayInfo.maxCapacity || 5)) * 100))}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="pt-2 border-t border-neutral-850 flex items-center justify-between text-[11px]">
+                  <span className="text-neutral-300">
+                    {activeDayInfo.isClosed ? 'Tutup' : activeDayInfo.maxCapacity === 1 ? 'VIP (1 Sesi)' : 'Normal (5 Slot)'}
+                  </span>
+                  <span className="font-mono text-neutral-400">
+                    {Math.max(0, (activeDayInfo.maxCapacity || 5) - todaysSessions.length)} Tersedia
+                  </span>
+                </div>
+              </div>
 
-                  {pendingBookings.length === 0 ? (
-                    <div className="p-8 text-center rounded-2xl border border-dashed border-zinc-300 dark:border-white/10">
-                      <CheckCircle2 className="w-7 h-7 text-emerald-500 mx-auto mb-2" />
-                      <p className="text-xs font-medium">Semua antrean booking telah diproses!</p>
-                      <p className={`text-[11px] ${textMuted} mt-0.5`}>
-                        Klik tombol "+ Test Booking Masuk" di atas jika ingin menguji simulasi alur masuk.
-                      </p>
-                    </div>
+              {/* Metric 4: Delivery Google Drive */}
+              <div className={`p-4 rounded-xl border ${cardBg} space-y-2.5`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-neutral-400 font-semibold">
+                    PENGIRIMAN GOOGLE DRIVE
+                  </span>
+                  <div className="w-7 h-7 rounded-lg bg-[#111111] border border-neutral-800 flex items-center justify-center text-sky-400">
+                    <HardDrive className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xl font-bold font-mono tabular-nums text-white">
+                    {deliveryList.filter((b) => b.deliveryStatus === 'READY_DELIVERY' || b.deliveryStatus === 'COMPLETED').length} / {deliveryList.length}
+                  </p>
+                  <p className={`text-[11px] font-mono ${textMuted} mt-0.5`}>
+                    {deliveryList.filter((b) => b.deliveryStatus === 'READY_DELIVERY').length} Siap Kirim &bull; {deliveryList.filter((b) => b.deliveryStatus === 'EDITING').length} Editing
+                  </p>
+                </div>
+                <div className="pt-2 border-t border-neutral-850 flex items-center justify-between text-[11px]">
+                  <span className="text-sky-400 font-mono font-medium">Link Terdistribusi</span>
+                  <span className={textMuted}>100% On-Track</span>
+                </div>
+              </div>
+            </div>
+
+            {/* PRIORITY QUEUE: Antrean Verifikasi Booking (Cleaned Up & Icon-Driven) */}
+            <div className={`p-4 sm:p-5 rounded-xl border ${cardBg} space-y-3.5`}>
+              <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-sm font-bold text-white tracking-wide">
+                    Antrean Verifikasi Booking
+                  </h2>
+                  {pendingBookings.length > 0 ? (
+                    <span className="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                      {pendingBookings.length} PERLU TINDAKAN
+                    </span>
                   ) : (
-                    <div className="space-y-3">
-                      {paginatedPendingBookings.map((b) => (
-                        <div
-                          key={b.id}
-                          className={`p-4 rounded-2xl border space-y-3 ${
-                            isLight ? 'bg-zinc-50 border-orange-200' : 'bg-white/[0.03] border-orange-500/30'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono text-xs font-bold text-orange-500">#{b.id}</span>
-                              <span className="font-bold text-xs">{b.customerName}</span>
-                            </div>
-                            <span className="text-[10px] font-mono text-zinc-400">
-                              {new Date(b.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs bg-black/5 dark:bg-black/30 p-2.5 rounded-xl">
-                            <div>
-                              <span className="text-[10px] text-zinc-400 block">Layanan:</span>
-                              <span className="font-medium">{b.packageName}</span>
-                            </div>
-                            <div>
-                              <span className="text-[10px] text-zinc-400 block">Jadwal Sesi:</span>
-                              <span className="font-medium text-orange-500">{b.date} ({b.timeSlot})</span>
-                            </div>
-                            <div>
-                              <span className="text-[10px] text-zinc-400 block">DP Masuk:</span>
-                              <span className="font-medium">Rp {b.dpAmount.toLocaleString('id-ID')}</span>
-                            </div>
-                          </div>
-
-                          {b.notes && (
-                            <p className="text-xs italic text-zinc-500 font-light">"{b.notes}"</p>
-                          )}
-
-                          <div className="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-white/5">
-                            <span className="text-xs font-mono text-zinc-500">{b.customerPhone}</span>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => handleOpenReject(b)}
-                                className="px-3 py-1.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 text-xs font-medium cursor-pointer"
-                              >
-                                Tolak
-                              </button>
-                              <button
-                                onClick={() => handleApprove(b)}
-                                className="px-4 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Setujui & Buka WA</span>
-                                <ExternalLink className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Pagination for pending queue */}
-                      {renderPagination(
-                        pendingPage,
-                        totalPendingPages,
-                        pendingBookings.length,
-                        pendingPerPage,
-                        setPendingPage,
-                        'antrean booking'
-                      )}
-                    </div>
+                    <span className="px-2 py-0.5 text-[10px] font-mono rounded-md bg-neutral-900 text-neutral-400 border border-neutral-800 font-medium">
+                      KOSONG
+                    </span>
                   )}
                 </div>
 
+                <p className={`text-xs ${textMuted} hidden sm:block`}>
+                  Periksa bukti transfer DP & konfirmasi slot via WhatsApp
+                </p>
               </div>
 
-              {/* RIGHT 5-COL: Mini Calendar & Today's Schedule Timeline (Matching reference layout right side) */}
-              <div className="lg:col-span-5 space-y-7">
-                
-                {/* Mini Calendar Card with Days of Week */}
-                <div className={`p-6 rounded-3xl border ${cardBg} space-y-4`}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className={`text-base font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                        Jadwal Sesi Hari Ini
-                      </h3>
-                      <p className={`text-xs ${textMuted}`}>{formatReadableDate(scheduleDate)} ({scheduleDate})</p>
-                    </div>
+              {pendingBookings.length === 0 ? (
+                <div className="p-6 text-center rounded-lg border border-neutral-850 bg-[#0e0e0e]">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-400 mx-auto mb-1.5 opacity-90" />
+                  <p className="text-xs font-semibold text-neutral-200">Semua antrean booking telah diproses</p>
+                  <p className={`text-[11px] ${textMuted} mt-0.5`}>
+                    Tidak ada reservasi yang menunggu verifikasi DP saat ini.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {paginatedPendingBookings.map((b) => (
+                    <div
+                      key={b.id}
+                      className="p-3 sm:p-3.5 rounded-lg border border-neutral-800 bg-[#0e0e0e] hover:border-neutral-700 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3"
+                    >
+                      {/* Left info */}
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-xs font-bold text-amber-400">#{b.id}</span>
+                          <span className="font-bold text-xs text-white truncate">{b.customerName}</span>
+                          <span className="text-[11px] font-mono text-neutral-400">({b.customerPhone})</span>
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-neutral-900 text-neutral-300 border border-neutral-800">
+                            {b.packageName}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3 text-xs font-mono text-neutral-300">
+                          <span className="text-neutral-400">Jadwal: <strong className="text-white">{b.date} ({b.timeSlot})</strong></span>
+                          <span>&bull;</span>
+                          <span>DP: <strong className="text-emerald-400">Rp {b.dpAmount.toLocaleString('id-ID')}</strong></span>
+                          <span>&bull;</span>
+                          <span className="text-neutral-400">Total: Rp {b.totalPrice.toLocaleString('id-ID')}</span>
+                        </div>
+                        {b.notes && (
+                          <p className="text-[11px] italic text-neutral-400 font-light truncate">
+                            Catatan: "{b.notes}"
+                          </p>
+                        )}
+                      </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handleToggleDayLock}
-                        className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                          activeDayInfo.isClosed ? 'bg-rose-500 text-white' : 'bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-300'
-                        }`}
-                      >
-                        {activeDayInfo.isClosed ? 'Buka Hari' : 'Kunci Hari'}
-                      </button>
+                      {/* Right Icon Action Bar */}
+                      <div className="flex items-center gap-1.5 self-end md:self-auto shrink-0">
+                        {/* WhatsApp Icon */}
+                        <a
+                          href={`https://wa.me/${b.customerPhone.replace(/\D/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-lg border border-neutral-800 bg-[#141414] text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+                          title="Chat WhatsApp Klien"
+                        >
+                          <MessageCircle className="w-4 h-4 text-emerald-400" />
+                        </a>
+
+                        {/* Invoice Icon */}
+                        <button
+                          type="button"
+                          onClick={() => setReceiptBooking(b)}
+                          className="p-2 rounded-lg border border-neutral-800 bg-[#141414] text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+                          title="Lihat Rincian / Invoice"
+                        >
+                          <Eye className="w-4 h-4 text-sky-400" />
+                        </button>
+
+                        {/* Reject Icon Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReject(b)}
+                          className="p-2 rounded-lg border border-rose-950/60 bg-rose-950/20 text-rose-400 hover:bg-rose-950/50 hover:border-rose-900 transition-colors cursor-pointer"
+                          title="Tolak Reservasi"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+
+                        {/* Approve Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleApprove(b)}
+                          className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                          title="Setujui Booking & Konfirmasi WhatsApp"
+                        >
+                          <Check className="w-4 h-4 stroke-[2.5]" />
+                          <span>Setujui</span>
+                        </button>
+                      </div>
                     </div>
+                  ))}
+
+                  {/* Pagination for pending queue */}
+                  {renderPagination(
+                    pendingPage,
+                    totalPendingPages,
+                    pendingBookings.length,
+                    pendingPerPage,
+                    setPendingPage,
+                    'antrean booking'
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* TWO-COLUMN OPERATIONAL GRID: Schedule Today (Left) vs Urgent Production Tasks (Right) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              
+              {/* LEFT 7-COL: Schedule Today */}
+              <div className={`lg:col-span-7 p-4 sm:p-5 rounded-xl border ${cardBg} space-y-3.5`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-neutral-800">
+                  <div>
+                    <h3 className="text-sm font-bold text-white tracking-wide">
+                      Jadwal Pemotretan Hari Ini
+                    </h3>
+                    <p className={`text-xs ${textMuted}`}>
+                      {formatReadableDate(scheduleDate)} ({scheduleDate})
+                    </p>
                   </div>
 
-                  {/* Sessions timeline */}
-                  <div className="space-y-3 pt-2">
-                    {todaysSessions.length === 0 ? (
-                      <div className="p-6 text-center rounded-2xl border border-zinc-200 dark:border-white/5">
-                        <CalendarIcon className="w-6 h-6 text-zinc-400 mx-auto mb-1.5" />
-                        <p className="text-xs text-zinc-400">Belum ada sesi approved untuk tanggal ini.</p>
-                      </div>
-                    ) : (
-                      todaysSessions.map((s) => (
-                        <div
-                          key={s.id}
-                          className={`p-3.5 rounded-2xl border flex items-center justify-between ${
-                            isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-white/[0.02] border-white/5'
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                              <span className="font-bold text-xs">{s.timeSlot}</span>
-                            </div>
-                            <p className="text-xs font-medium mt-0.5">{s.customerName}</p>
-                            <p className={`text-[10px] ${textMuted}`}>{s.packageName}</p>
-                          </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleToggleDayLock}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                        activeDayInfo.isClosed
+                          ? 'bg-rose-950/40 border-rose-800 text-rose-300'
+                          : 'bg-[#141414] border-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-800'
+                      }`}
+                    >
+                      {activeDayInfo.isClosed ? 'Buka Hari' : 'Kunci Hari Libur'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleToggleSingleCustomerMode}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                        activeDayInfo.maxCapacity === 1
+                          ? 'bg-amber-950/40 border-amber-800 text-amber-300'
+                          : 'bg-[#141414] border-neutral-800 text-neutral-300 hover:text-white hover:bg-neutral-800'
+                      }`}
+                      title="Batasi hanya 1 booking untuk privasi klien VIP"
+                    >
+                      {activeDayInfo.maxCapacity === 1 ? '1 Customer VIP' : 'Reguler (5 Slot)'}
+                    </button>
+                  </div>
+                </div>
 
-                          <div className="flex items-center gap-1.5">
-                            <button
-                              onClick={() => setReceiptBooking(s)}
-                              className="p-1.5 rounded-full bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-300"
-                              title="Invoice"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                            </button>
-                            <a
-                              href={`https://wa.me/${s.customerPhone.replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="p-1.5 rounded-full bg-emerald-500 text-black"
-                              title="Chat WA"
-                            >
-                              <Phone className="w-3.5 h-3.5" />
-                            </a>
+                {/* Sesi Pemotretan Hari Ini */}
+                <div className="space-y-2 pt-1">
+                  {todaysSessions.length === 0 ? (
+                    <div className="p-6 text-center rounded-lg border border-neutral-850 bg-[#0e0e0e]">
+                      <CalendarIcon className="w-6 h-6 text-neutral-500 mx-auto mb-1.5" />
+                      <p className="text-xs font-medium text-neutral-300">Belum ada sesi pemotretan hari ini</p>
+                      <p className={`text-[11px] ${textMuted} mt-0.5`}>
+                        Klik "+ Booking" untuk reservasi walk-in di studio.
+                      </p>
+                    </div>
+                  ) : (
+                    todaysSessions.map((s) => (
+                      <div
+                        key={s.id}
+                        className="p-3 rounded-lg border border-neutral-800 bg-[#0e0e0e] flex items-center justify-between gap-3 hover:border-neutral-700 transition-colors"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="font-mono text-xs font-bold text-white">{s.timeSlot}</span>
+                            <span className="font-mono text-[10px] text-neutral-500">#{s.id}</span>
+                          </div>
+                          <p className="text-xs font-semibold text-neutral-200 mt-0.5 truncate">{s.customerName}</p>
+                          <div className="flex items-center gap-2 text-[10px] font-mono text-neutral-400">
+                            <span>{s.packageName}</span>
+                            <span>&bull;</span>
+                            <span>{s.customerPhone}</span>
                           </div>
                         </div>
-                      ))
-                    )}
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setReceiptBooking(s)}
+                            className="p-2 rounded-lg border border-neutral-800 bg-[#141414] text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors cursor-pointer"
+                            title="Lihat Invoice"
+                          >
+                            <Eye className="w-3.5 h-3.5 text-sky-400" />
+                          </button>
+                          <a
+                            href={`https://wa.me/${s.customerPhone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-lg border border-neutral-800 bg-[#141414] text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors"
+                            title="Chat WhatsApp"
+                          >
+                            <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                          </a>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* RIGHT 5-COL: Studio Tasks & Operational To-Do */}
+              <div className={`lg:col-span-5 p-4 sm:p-5 rounded-xl border ${cardBg} space-y-3.5`}>
+                <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+                  <div>
+                    <h3 className="text-sm font-bold text-white tracking-wide">
+                      Agenda & Tugas Tim
+                    </h3>
+                    <p className={`text-xs ${textMuted}`}>
+                      Checklist pra-produksi, editing, dan delivery
+                    </p>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowAddTaskModal(true)}
+                    className="p-1.5 sm:px-2.5 sm:py-1 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs flex items-center gap-1 transition-colors cursor-pointer"
+                    title="Tambah pekerjaan tim"
+                  >
+                    <Plus className="w-3 h-3 stroke-[2.5]" />
+                    <span className="hidden sm:inline">Tambah</span>
+                  </button>
                 </div>
 
-                {/* Studio Health & Quick Controls */}
-                <div className={`p-6 rounded-3xl border ${cardBg} space-y-4`}>
-                  <h3 className={`text-base font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
-                    Kontrol Cepat Studio
-                  </h3>
-
-                  <div className="space-y-3 text-xs">
-                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-100 dark:bg-white/5">
-                      <div>
-                        <p className="font-semibold">Mode Eksklusif 1 Customer</p>
-                        <p className={`text-[11px] ${textMuted}`}>Kunci sisa slot setelah 1 booking approved</p>
+                <div className="space-y-2 pt-1">
+                  {tasks.slice(0, 5).map((task) => (
+                    <div
+                      key={task.id}
+                      className={`p-2.5 rounded-lg border flex items-center justify-between gap-3 transition-colors ${
+                        task.isCompleted
+                          ? 'bg-neutral-900/40 border-neutral-850 opacity-50'
+                          : 'bg-[#0e0e0e] border-neutral-800'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => toggleTask(task.id)}
+                          className="cursor-pointer text-neutral-400 hover:text-white shrink-0"
+                          title={task.isCompleted ? 'Tandai belum selesai' : 'Tandai selesai'}
+                        >
+                          {task.isCompleted ? (
+                            <CheckSquare className="w-4 h-4 text-emerald-400" />
+                          ) : (
+                            <Square className="w-4 h-4" />
+                          )}
+                        </button>
+                        <div className="min-w-0">
+                          <p className={`text-xs font-medium truncate ${task.isCompleted ? 'line-through text-neutral-500' : 'text-neutral-200'}`}>
+                            {task.title}
+                          </p>
+                          <div className="flex items-center gap-1.5 text-[10px] font-mono text-neutral-400">
+                            <span className="uppercase text-amber-400 font-semibold">[{task.category}]</span>
+                            <span>&bull;</span>
+                            <span>{task.deadline}</span>
+                          </div>
+                        </div>
                       </div>
+
                       <button
-                        onClick={handleToggleSingleCustomerMode}
-                        className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          activeDayInfo.maxCapacity === 1 ? 'bg-orange-500 text-white' : 'bg-zinc-300 dark:bg-white/10'
-                        }`}
+                        type="button"
+                        onClick={() => deleteTask(task.id)}
+                        className="text-neutral-500 hover:text-rose-400 p-1 shrink-0"
+                        title="Hapus tugas"
                       >
-                        {activeDayInfo.maxCapacity === 1 ? 'Aktif' : 'Off'}
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
+                  ))}
 
-                    <div className="flex items-center justify-between p-3 rounded-2xl bg-zinc-100 dark:bg-white/5">
-                      <div>
-                        <p className="font-semibold">Ekspor Laporan Keuangan</p>
-                        <p className={`text-[11px] ${textMuted}`}>Download spreadsheet CSV transaksi</p>
-                      </div>
-                      <button
-                        onClick={handleExportCSV}
-                        className="px-3 py-1 rounded-full bg-emerald-500 text-black font-bold text-xs"
-                      >
-                        CSV
-                      </button>
-                    </div>
-                  </div>
+                  {tasks.length > 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveNav('tasks')}
+                      className="w-full py-1 text-center text-xs font-mono text-neutral-400 hover:text-white transition-colors"
+                    >
+                      Lihat semua {tasks.length} tugas &rarr;
+                    </button>
+                  )}
                 </div>
-
               </div>
 
             </div>
@@ -1890,27 +1986,27 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
           </div>
         )}
 
-        {/* ================= VIEW: JADWAL & KUOTA BIOSKOP ================= */}
+        {/* ================= VIEW: MANAJEMEN JADWAL & SLOT ================= */}
         {activeNav === 'calendar' && (
-          <div className={`p-6 rounded-3xl border ${cardBg} space-y-6`}>
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-white/10">
+          <div className={`p-5 rounded-xl border ${cardBg} space-y-6`}>
+            <div className={`flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b ${borderSubtle}`}>
               <div>
-                <h2 className="text-lg font-bold">Kelola Jadwal & Kuota Bioskop Studio</h2>
-                <p className={`text-xs ${textMuted}`}>Atur penonaktifan hari, mode 1 customer, atau kunci slot individu.</p>
+                <h2 className="text-base font-bold text-slate-100">Manajemen Jadwal Operasional & Alokasi Slot</h2>
+                <p className={`text-xs ${textMuted}`}>Konfigurasi status ketersediaan tanggal, kuota sesi harian, dan penguncian slot jam pemotretan.</p>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setScheduleDate(getTodayDateString(0))}
-                  className="px-2.5 py-1 text-xs font-mono rounded-xl border border-orange-500/30 text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 transition-colors"
+                  className="px-2.5 py-1 text-xs font-mono rounded-lg border border-slate-700 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
                 >
                   Hari Ini
                 </button>
                 <button
                   type="button"
                   onClick={() => setScheduleDate(getTodayDateString(1))}
-                  className="px-2.5 py-1 text-xs font-mono rounded-xl border border-white/10 text-zinc-400 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
+                  className="px-2.5 py-1 text-xs font-mono rounded-lg border border-slate-700 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-colors cursor-pointer"
                 >
                   Besok
                 </button>
@@ -1918,7 +2014,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   type="date"
                   value={scheduleDate}
                   onChange={(e) => setScheduleDate(e.target.value)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-mono focus:outline-none ${inputBg}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-mono focus:outline-none ${inputBg}`}
                 />
               </div>
             </div>
@@ -1934,32 +2030,34 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   <button
                     key={slot.id}
                     onClick={() => handleToggleSlotLock(slot.time)}
-                    className={`p-4 rounded-2xl border text-left transition-all flex items-center justify-between ${
+                    className={`p-3.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
                       isBooked
-                        ? 'bg-rose-500/10 border-rose-500/30 text-rose-500'
+                        ? 'bg-rose-950/20 border-rose-900/50 text-rose-400'
                         : isPending
-                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
+                        ? 'bg-amber-950/20 border-amber-900/50 text-amber-300'
                         : isManuallyLocked
-                        ? 'bg-zinc-200 dark:bg-black border-zinc-300 dark:border-white/5 opacity-50 line-through'
-                        : isLight
-                        ? 'bg-zinc-50 border-zinc-200 hover:border-zinc-400'
-                        : 'bg-white/[0.02] border-white/10 hover:border-white/30'
+                        ? 'bg-[#090909] border-neutral-850 opacity-40 line-through text-neutral-500'
+                        : 'bg-[#0e0e0e] border-neutral-800 hover:border-neutral-700 text-white'
                     }`}
                   >
                     <div>
-                      <span className="font-mono font-bold text-sm">{slot.time}</span>
-                      <p className="text-[11px] text-zinc-400 mt-0.5">{slot.label}</p>
+                      <span className="font-mono font-bold text-sm tracking-tight">{slot.time}</span>
+                      <p className="text-[11px] text-neutral-400 mt-0.5">{slot.label}</p>
                     </div>
 
                     <div>
                       {isBooked ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500 text-white">Booked</span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-rose-950/60 text-rose-300 border border-rose-900/60">
+                          Booked
+                        </span>
                       ) : isPending ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-white">Pending</span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-amber-950/60 text-amber-300 border border-amber-900/60">
+                          Pending
+                        </span>
                       ) : isManuallyLocked ? (
-                        <Lock className="w-4 h-4 text-zinc-500" />
+                        <Lock className="w-4 h-4 text-neutral-500" />
                       ) : (
-                        <Unlock className="w-4 h-4 text-emerald-500" />
+                        <Unlock className="w-4 h-4 text-emerald-400" />
                       )}
                     </div>
                   </button>
@@ -1972,10 +2070,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
         {/* ================= VIEW: INVENTARIS GEAR & ALAT STUDIO ================= */}
         {activeNav === 'inventory' && (
           <div className="space-y-6">
-            <div className={`p-6 rounded-3xl border ${cardBg} space-y-4`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200 dark:border-white/10">
+            <div className={`p-4 sm:p-5 rounded-xl border ${cardBg} space-y-4`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-800">
                 <div>
-                  <h2 className={`text-lg font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
+                  <h2 className="text-base font-bold text-white tracking-wide">
                     Inventaris Gear & Peralatan Studio
                   </h2>
                   <p className={`text-xs ${textMuted}`}>
@@ -1984,35 +2082,36 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => setShowAddGearModal(true)}
-                  className="px-4 py-2 rounded-full bg-lime-300 text-zinc-950 font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="px-3 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Tambah Peralatan Baru</span>
                 </button>
               </div>
 
               {/* KPI Status Alat */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className={`p-4 rounded-2xl border ${isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-white/[0.02] border-white/8'}`}>
-                  <span className="text-[10px] font-mono uppercase text-zinc-400">TOTAL PERALATAN</span>
-                  <p className="text-xl font-bold mt-1">{gearList.length} Item</p>
+                <div className="p-3.5 rounded-xl border bg-[#0e0e0e] border-neutral-800">
+                  <span className="text-[10px] font-mono uppercase text-neutral-400 font-semibold tracking-wider">TOTAL PERALATAN</span>
+                  <p className="text-lg font-bold font-mono mt-1 text-white">{gearList.length} Item</p>
                 </div>
-                <div className={`p-4 rounded-2xl border ${isLight ? 'bg-emerald-500/10 border-emerald-200' : 'bg-emerald-500/10 border-emerald-500/20'}`}>
-                  <span className="text-[10px] font-mono uppercase text-emerald-600 dark:text-emerald-400 font-bold">READY / SIAP PAKAI</span>
-                  <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                <div className="p-3.5 rounded-xl border bg-emerald-950/20 border-emerald-900/40">
+                  <span className="text-[10px] font-mono uppercase text-emerald-400 font-semibold tracking-wider">READY / SIAP PAKAI</span>
+                  <p className="text-lg font-bold font-mono text-emerald-400 mt-1">
                     {gearList.filter((g) => g.status === 'ready').length} Item
                   </p>
                 </div>
-                <div className={`p-4 rounded-2xl border ${isLight ? 'bg-amber-500/10 border-amber-200' : 'bg-amber-500/10 border-amber-500/20'}`}>
-                  <span className="text-[10px] font-mono uppercase text-amber-600 dark:text-amber-400 font-bold">SEDANG DIGUNAKAN</span>
-                  <p className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-1">
+                <div className="p-3.5 rounded-xl border bg-amber-950/20 border-amber-900/40">
+                  <span className="text-[10px] font-mono uppercase text-amber-300 font-semibold tracking-wider">SEDANG DIGUNAKAN</span>
+                  <p className="text-lg font-bold font-mono text-amber-300 mt-1">
                     {gearList.filter((g) => g.status === 'in_use').length} Item
                   </p>
                 </div>
-                <div className={`p-4 rounded-2xl border ${isLight ? 'bg-sky-500/10 border-sky-200' : 'bg-sky-500/10 border-sky-500/20'}`}>
-                  <span className="text-[10px] font-mono uppercase text-sky-600 dark:text-sky-400 font-bold">CHARGING / SERVIS</span>
-                  <p className="text-xl font-bold text-sky-600 dark:text-sky-400 mt-1">
+                <div className="p-3.5 rounded-xl border bg-sky-950/20 border-sky-900/40">
+                  <span className="text-[10px] font-mono uppercase text-sky-400 font-semibold tracking-wider">CHARGING / SERVIS</span>
+                  <p className="text-lg font-bold font-mono text-sky-400 mt-1">
                     {gearList.filter((g) => g.status === 'charging' || g.status === 'maintenance').length} Item
                   </p>
                 </div>
@@ -2032,14 +2131,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   <button
                     key={cat.id}
                     onClick={() => setSelectedGearCat(cat.id)}
-                    className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium whitespace-nowrap transition-colors cursor-pointer ${
                       selectedGearCat === cat.id
-                        ? isLight
-                          ? 'bg-zinc-900 text-white font-bold'
-                          : 'bg-white text-zinc-950 font-bold'
-                        : isLight
-                        ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                        : 'bg-white/5 text-zinc-400 hover:text-white'
+                        ? 'bg-white text-black font-semibold border-white shadow-sm'
+                        : 'bg-[#121212] border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-800'
                     }`}
                   >
                     {cat.label}
@@ -2049,28 +2144,28 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
             </div>
 
             {/* Gear Items Matrix */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {paginatedGear.map((gear) => (
                 <div
                   key={gear.id}
-                  className={`p-5 rounded-3xl border flex flex-col justify-between space-y-4 ${cardBg}`}
+                  className="p-4 rounded-xl border border-neutral-800 bg-[#0c0c0c] hover:border-neutral-700 transition-colors flex flex-col justify-between space-y-3.5"
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono uppercase text-orange-500 font-bold">
+                      <span className="text-[10px] font-mono uppercase text-amber-400 font-bold">
                         [{gear.category}]
                       </span>
                       
                       {/* Status Badge */}
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold ${
                           gear.status === 'ready'
-                            ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
+                            ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-900/60'
                             : gear.status === 'in_use'
-                            ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                            ? 'bg-amber-950/60 text-amber-300 border border-amber-900/60'
                             : gear.status === 'charging'
-                            ? 'bg-sky-500/20 text-sky-600 dark:text-sky-400'
-                            : 'bg-rose-500/20 text-rose-600 dark:text-rose-400'
+                            ? 'bg-sky-950/60 text-sky-300 border border-sky-900/60'
+                            : 'bg-rose-950/60 text-rose-300 border border-rose-900/60'
                         }`}
                       >
                         {gear.status === 'ready'
@@ -2083,16 +2178,16 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                       </span>
                     </div>
 
-                    <h3 className={`text-sm font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
+                    <h3 className="text-sm font-bold text-white tracking-tight">
                       {gear.name}
                     </h3>
 
-                    <div className="space-y-1 text-xs text-zinc-400">
+                    <div className="space-y-1 text-xs text-neutral-400">
                       {gear.serialNumber && (
-                        <p className="font-mono text-[11px]">SN: {gear.serialNumber}</p>
+                        <p className="font-mono text-[11px] text-neutral-400">SN: {gear.serialNumber}</p>
                       )}
-                      <p className="text-[11px] flex items-center gap-1">
-                        <HardDrive className="w-3 h-3 text-zinc-500" />
+                      <p className="text-[11px] flex items-center gap-1.5 text-neutral-400">
+                        <HardDrive className="w-3.5 h-3.5 text-neutral-500" />
                         <span>{gear.location}</span>
                       </p>
                     </div>
@@ -2101,15 +2196,15 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                     {gear.batteryLevel !== undefined && (
                       <div className="space-y-1 pt-1">
                         <div className="flex items-center justify-between text-[10px] font-mono">
-                          <span className="flex items-center gap-1 text-zinc-400">
-                            <BatteryCharging className="w-3 h-3 text-lime-500" />
+                          <span className="flex items-center gap-1 text-neutral-400">
+                            <BatteryCharging className="w-3 h-3 text-emerald-400" />
                             <span>Baterai</span>
                           </span>
-                          <span className="font-bold">{gear.batteryLevel}%</span>
+                          <span className="font-bold text-white">{gear.batteryLevel}%</span>
                         </div>
-                        <div className="w-full h-1.5 rounded-full bg-zinc-200 dark:bg-white/10 overflow-hidden">
+                        <div className="w-full h-1.5 rounded-full bg-neutral-900 overflow-hidden border border-neutral-800">
                           <div
-                            className={`h-full rounded-full ${
+                            className={`h-full rounded-full transition-all ${
                               gear.batteryLevel > 50
                                 ? 'bg-emerald-500'
                                 : gear.batteryLevel > 20
@@ -2124,7 +2219,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
                     {/* Current Session Note */}
                     {gear.currentSession && (
-                      <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px]">
+                      <div className="p-2 rounded-lg bg-amber-950/20 border border-amber-900/30 text-amber-300 text-[11px]">
                         ⚡ {gear.currentSession}
                       </div>
                     )}
@@ -2135,34 +2230,34 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   </div>
 
                   {/* Quick Status Action Controls */}
-                  <div className="pt-3 border-t border-zinc-200 dark:border-white/10 flex items-center justify-between">
+                  <div className="pt-3 border-t border-neutral-850 flex items-center justify-between">
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => handleToggleGearStatus(gear.id, 'ready')}
-                        className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${
+                        className={`px-2 py-1 rounded-md text-[10px] font-medium border cursor-pointer transition-colors ${
                           gear.status === 'ready'
-                            ? 'bg-emerald-500 text-black'
-                            : 'bg-zinc-200 dark:bg-white/5 text-zinc-500 hover:text-white'
+                            ? 'bg-emerald-600 text-white border-emerald-500 font-semibold'
+                            : 'bg-[#141414] border-neutral-800 text-neutral-400 hover:text-white'
                         }`}
                       >
                         Ready
                       </button>
                       <button
                         onClick={() => handleToggleGearStatus(gear.id, 'in_use')}
-                        className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${
+                        className={`px-2 py-1 rounded-md text-[10px] font-medium border cursor-pointer transition-colors ${
                           gear.status === 'in_use'
-                            ? 'bg-amber-500 text-black'
-                            : 'bg-zinc-200 dark:bg-white/5 text-zinc-500 hover:text-white'
+                            ? 'bg-amber-600 text-white border-amber-500 font-semibold'
+                            : 'bg-[#141414] border-neutral-800 text-neutral-400 hover:text-white'
                         }`}
                       >
                         In-Use
                       </button>
                       <button
                         onClick={() => handleToggleGearStatus(gear.id, 'charging')}
-                        className={`px-2 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${
+                        className={`px-2 py-1 rounded-md text-[10px] font-medium border cursor-pointer transition-colors ${
                           gear.status === 'charging'
-                            ? 'bg-sky-500 text-white'
-                            : 'bg-zinc-200 dark:bg-white/5 text-zinc-500 hover:text-white'
+                            ? 'bg-sky-600 text-white border-sky-500 font-semibold'
+                            : 'bg-[#141414] border-neutral-800 text-neutral-400 hover:text-white'
                         }`}
                       >
                         Charge
@@ -2171,7 +2266,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
                     <button
                       onClick={() => handleDeleteGear(gear.id)}
-                      className="p-1.5 text-zinc-400 hover:text-rose-500 cursor-pointer"
+                      className="p-1.5 rounded-lg border border-neutral-800 bg-[#121212] text-neutral-400 hover:text-rose-400 hover:bg-rose-950/20 transition-colors cursor-pointer"
                       title="Hapus Alat"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -2196,10 +2291,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
         {/* ================= VIEW: DELIVERY & GOOGLE DRIVE LINK MANAGER ================= */}
         {activeNav === 'delivery' && (
           <div className="space-y-6">
-            <div className={`p-6 rounded-3xl border ${cardBg} space-y-4`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200 dark:border-white/10">
+            <div className={`p-4 sm:p-5 rounded-xl border ${cardBg} space-y-4`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-800">
                 <div>
-                  <h2 className={`text-lg font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
+                  <h2 className="text-base font-bold text-white tracking-wide">
                     Portal Distribusi & Google Drive Link Manager
                   </h2>
                   <p className={`text-xs ${textMuted}`}>
@@ -2208,7 +2303,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-zinc-400">
+                  <span className="text-xs font-mono text-neutral-400">
                     {approvedBookings.length} Sesi Terkonfirmasi
                   </span>
                 </div>
@@ -2216,18 +2311,18 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
               {/* Delivery Toast Alert */}
               {deliverySavedToast && (
-                <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" />
+                <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   <span>{deliverySavedToast}</span>
                 </div>
               )}
 
               {/* Status Filter */}
-              <div className="flex items-center gap-2 text-xs overflow-x-auto pb-1">
+              <div className="flex items-center gap-1.5 text-xs overflow-x-auto pb-1">
                 {[
                   { id: 'ALL', label: 'Semua Booking' },
                   { id: 'PENDING_SHOOT', label: 'Menunggu Pemotretan' },
-                  { id: 'RAW_SENT', label: 'RAW Negatives Dikirim' },
+                  { id: 'RAW_SENT', label: 'RAW Drive Dikirim' },
                   { id: 'EDITING', label: 'Sedang Editing' },
                   { id: 'READY_DELIVERY', label: 'File Final Siap' },
                   { id: 'COMPLETED', label: 'Selesai Sempurna' },
@@ -2235,14 +2330,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   <button
                     key={tab.id}
                     onClick={() => setDeliveryFilter(tab.id)}
-                    className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap cursor-pointer transition-colors ${
+                    className={`px-3 py-1.5 rounded-lg border text-xs font-medium whitespace-nowrap cursor-pointer transition-colors ${
                       deliveryFilter === tab.id
-                        ? isLight
-                          ? 'bg-zinc-900 text-white font-bold'
-                          : 'bg-white text-zinc-950 font-bold'
-                        : isLight
-                        ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                        : 'bg-white/5 text-zinc-400 hover:text-white'
+                        ? 'bg-white text-black font-semibold border-white shadow-sm'
+                        : 'bg-[#121212] border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-800'
                     }`}
                   >
                     {tab.label}
@@ -2252,7 +2343,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
             </div>
 
             {/* Bookings Delivery List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {paginatedDelivery.map((b) => {
                 const currentDriveUrl = driveInputMap[b.id] !== undefined ? driveInputMap[b.id] : (b.googleDriveUrl || '');
                 const currentStatus = b.deliveryStatus || 'PENDING_SHOOT';
@@ -2260,38 +2351,37 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 return (
                   <div
                     key={b.id}
-                    className={`p-6 rounded-3xl border space-y-4 ${cardBg}`}
+                    className="p-4 sm:p-5 rounded-xl border border-neutral-800 bg-[#0c0c0c] hover:border-neutral-700 transition-colors space-y-3.5"
                   >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-orange-500">#{b.id}</span>
-                          <span className="font-bold text-sm">{b.customerName}</span>
-                          <span className="text-xs text-zinc-400">&bull; {b.packageName}</span>
+                          <span className="font-mono text-xs font-bold text-amber-400">#{b.id}</span>
+                          <span className="font-bold text-sm text-white">{b.customerName}</span>
+                          <span className="text-xs text-neutral-400">&bull; {b.packageName}</span>
                         </div>
-                        <p className="text-xs text-zinc-400 mt-0.5">
-                          Jadwal: {b.date} ({b.timeSlot}) &bull; WA: <span className="font-mono">{b.customerPhone}</span>
+                        <p className="text-xs text-neutral-400 mt-0.5">
+                          Jadwal: <span className="text-neutral-200">{b.date} ({b.timeSlot})</span> &bull; WA: <span className="font-mono text-neutral-300">{b.customerPhone}</span>
                         </p>
                       </div>
 
-                      {/* Delivery Stage Pills */}
+                      {/* Delivery Stage Buttons */}
                       <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
                         {[
-                          { key: 'PENDING_SHOOT', label: '1. Antrean Sesi' },
-                          { key: 'RAW_SENT', label: '2. RAW Drive' },
-                          { key: 'EDITING', label: '3. Retouching' },
-                          { key: 'READY_DELIVERY', label: '4. Final Siap' },
+                          { key: 'PENDING_SHOOT', label: '1. Antrean' },
+                          { key: 'RAW_SENT', label: '2. RAW' },
+                          { key: 'EDITING', label: '3. Retouch' },
+                          { key: 'READY_DELIVERY', label: '4. Final' },
                           { key: 'COMPLETED', label: '5. Selesai' },
                         ].map((st) => (
                           <button
                             key={st.key}
+                            type="button"
                             onClick={() => handleUpdateDeliveryStatus(b.id, st.key as any, currentDriveUrl)}
-                            className={`px-2.5 py-1 rounded-xl text-[10px] font-bold cursor-pointer transition-colors ${
+                            className={`px-2.5 py-1 rounded-md text-[10px] font-mono font-medium border cursor-pointer transition-colors ${
                               currentStatus === st.key
-                                ? 'bg-lime-300 text-zinc-950 shadow-sm'
-                                : isLight
-                                ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                                : 'bg-white/5 text-zinc-400 hover:text-white'
+                                ? 'bg-white text-black border-white font-bold shadow-sm'
+                                : 'bg-[#141414] border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-800'
                             }`}
                           >
                             {st.label}
@@ -2301,9 +2391,9 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                     </div>
 
                     {/* Google Drive Link Form */}
-                    <div className="p-4 rounded-2xl bg-black/5 dark:bg-black/30 border border-zinc-200 dark:border-white/5 space-y-3">
-                      <label className="text-xs font-bold flex items-center gap-1.5">
-                        <HardDrive className="w-3.5 h-3.5 text-lime-500" />
+                    <div className="p-3 sm:p-3.5 rounded-lg bg-[#121212] border border-neutral-800 space-y-2.5">
+                      <label className="text-xs font-semibold flex items-center gap-1.5 text-neutral-200">
+                        <HardDrive className="w-3.5 h-3.5 text-sky-400" />
                         <span>Link Folder Google Drive Klien:</span>
                       </label>
                       
@@ -2313,11 +2403,12 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                           placeholder="https://drive.google.com/drive/folders/..."
                           value={currentDriveUrl}
                           onChange={(e) => setDriveInputMap({ ...driveInputMap, [b.id]: e.target.value })}
-                          className={`w-full px-3.5 py-2 rounded-xl text-xs font-mono ${inputBg}`}
+                          className={`w-full px-3 py-1.5 rounded-lg text-xs font-mono ${inputBg}`}
                         />
                         <button
+                          type="button"
                           onClick={() => handleUpdateDeliveryStatus(b.id, currentStatus, currentDriveUrl)}
-                          className="w-full sm:w-auto px-4 py-2 rounded-xl bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-bold text-xs whitespace-nowrap cursor-pointer"
+                          className="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs whitespace-nowrap cursor-pointer transition-colors"
                         >
                           Simpan Link
                         </button>
@@ -2325,9 +2416,9 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                     </div>
 
                     {/* Bottom action: Send Link via WhatsApp */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-                      <span className="text-[11px] text-zinc-400">
-                        {currentDriveUrl ? '✅ Link Drive terpasang dan siap dikirim.' : '⚠️ Masukkan link Drive sebelum broadcast ke WhatsApp.'}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                      <span className="text-[11px] font-mono text-neutral-400">
+                        {currentDriveUrl ? 'Link Drive siap dikirim ke klien.' : 'Masukkan link Drive sebelum broadcast ke WhatsApp.'}
                       </span>
 
                       <div className="flex items-center gap-2">
@@ -2336,10 +2427,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                             href={currentDriveUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="px-3 py-1.5 rounded-full border border-zinc-300 dark:border-white/10 text-xs font-medium inline-flex items-center gap-1"
+                            className="px-3 py-1.5 rounded-lg border border-neutral-800 bg-[#141414] text-xs font-medium inline-flex items-center gap-1.5 text-neutral-300 hover:text-white hover:bg-neutral-800 transition-colors"
                           >
-                            <ExternalLink className="w-3 h-3" />
-                            <span>Buka Folder Drive</span>
+                            <ExternalLink className="w-3 h-3 text-sky-400" />
+                            <span>Buka Drive</span>
                           </a>
                         )}
 
@@ -2348,10 +2439,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={() => sounds.playShutterSound()}
-                          className="px-4 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs inline-flex items-center gap-1.5 shadow-sm"
+                          className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs inline-flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                         >
                           <Phone className="w-3.5 h-3.5" />
-                          <span>Kirim Link ke WA Klien</span>
+                          <span>Kirim ke WhatsApp</span>
                           <Send className="w-3 h-3" />
                         </a>
                       </div>
@@ -2378,9 +2469,9 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 items-start">
             
             {/* LEFT 7-COL: Custom Quote Calculator */}
-            <div className={`lg:col-span-7 p-6 rounded-3xl border space-y-6 ${cardBg}`}>
-              <div className="pb-4 border-b border-zinc-200 dark:border-white/10">
-                <h2 className={`text-lg font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
+            <div className={`lg:col-span-7 p-4 sm:p-5 rounded-xl border space-y-5 ${cardBg}`}>
+              <div className="pb-3 border-b border-neutral-800">
+                <h2 className="text-base font-bold text-white tracking-wide">
                   Kalkulator Penawaran Kustom (Custom Quotation)
                 </h2>
                 <p className={`text-xs ${textMuted}`}>
@@ -2389,8 +2480,8 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               </div>
 
               {copiedQuoteToast && (
-                <div className="p-3 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
-                  <Check className="w-4 h-4" />
+                <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+                  <Check className="w-4 h-4 text-emerald-400" />
                   <span>Teks penawaran berhasil disalin ke clipboard!</span>
                 </div>
               )}
@@ -2399,34 +2490,34 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 {/* Client info */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block mb-1 font-semibold">Nama Prospek / Klien</label>
+                    <label className="block mb-1 font-semibold text-neutral-300">Nama Prospek / Klien</label>
                     <input
                       type="text"
                       placeholder="Contoh: Sarah Angelina"
                       value={calcClientName}
                       onChange={(e) => setCalcClientName(e.target.value)}
-                      className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                      className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                     />
                   </div>
                   <div>
-                    <label className="block mb-1 font-semibold">Nomor WhatsApp</label>
+                    <label className="block mb-1 font-semibold text-neutral-300">Nomor WhatsApp</label>
                     <input
                       type="tel"
                       placeholder="0812xxxx"
                       value={calcClientPhone}
                       onChange={(e) => setCalcClientPhone(e.target.value)}
-                      className={`w-full px-3.5 py-2 rounded-xl font-mono ${inputBg}`}
+                      className={`w-full px-3 py-1.5 rounded-lg font-mono ${inputBg}`}
                     />
                   </div>
                 </div>
 
                 {/* Base Package */}
                 <div>
-                  <label className="block mb-1 font-semibold">Pilih Paket Dasar</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Pilih Paket Dasar</label>
                   <select
                     value={calcPackageId}
                     onChange={(e) => setCalcPackageId(e.target.value)}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                   >
                     {SERVICE_PACKAGES.map((pkg) => (
                       <option key={pkg.id} value={pkg.id}>
@@ -2438,42 +2529,42 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
                 {/* Adjusters: Extra Hours & Extra People */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-2xl bg-black/5 dark:bg-black/30 border border-zinc-200 dark:border-white/5 space-y-1.5">
-                    <span className="font-semibold block">Extra Durasi (+Rp 250k/jam):</span>
+                  <div className="p-3 rounded-lg bg-[#0e0e0e] border border-neutral-800 space-y-1.5">
+                    <span className="font-semibold block text-neutral-300">Extra Durasi (+Rp 250k/jam):</span>
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
                         onClick={() => setCalcExtraHours((prev) => Math.max(0, prev - 1))}
-                        className="w-7 h-7 rounded-lg border flex items-center justify-center font-bold"
+                        className="w-7 h-7 rounded-md border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-white flex items-center justify-center font-bold cursor-pointer transition-colors"
                       >
                         -
                       </button>
-                      <span className="font-mono font-bold text-sm">{calcExtraHours} Jam</span>
+                      <span className="font-mono font-bold text-sm text-white">{calcExtraHours} Jam</span>
                       <button
                         type="button"
                         onClick={() => setCalcExtraHours((prev) => prev + 1)}
-                        className="w-7 h-7 rounded-lg border flex items-center justify-center font-bold"
+                        className="w-7 h-7 rounded-md border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-white flex items-center justify-center font-bold cursor-pointer transition-colors"
                       >
                         +
                       </button>
                     </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-black/5 dark:bg-black/30 border border-zinc-200 dark:border-white/5 space-y-1.5">
-                    <span className="font-semibold block">Tambahan Orang (+Rp 50k/org):</span>
+                  <div className="p-3 rounded-lg bg-[#0e0e0e] border border-neutral-800 space-y-1.5">
+                    <span className="font-semibold block text-neutral-300">Tambahan Orang (+Rp 50k/org):</span>
                     <div className="flex items-center gap-3">
                       <button
                         type="button"
                         onClick={() => setCalcExtraPeople((prev) => Math.max(0, prev - 1))}
-                        className="w-7 h-7 rounded-lg border flex items-center justify-center font-bold"
+                        className="w-7 h-7 rounded-md border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-white flex items-center justify-center font-bold cursor-pointer transition-colors"
                       >
                         -
                       </button>
-                      <span className="font-mono font-bold text-sm">{calcExtraPeople} Orang</span>
+                      <span className="font-mono font-bold text-sm text-white">{calcExtraPeople} Orang</span>
                       <button
                         type="button"
                         onClick={() => setCalcExtraPeople((prev) => prev + 1)}
-                        className="w-7 h-7 rounded-lg border flex items-center justify-center font-bold"
+                        className="w-7 h-7 rounded-md border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-white flex items-center justify-center font-bold cursor-pointer transition-colors"
                       >
                         +
                       </button>
@@ -2483,8 +2574,8 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
                 {/* Add-ons selection */}
                 <div>
-                  <label className="block mb-1.5 font-semibold">Pilih Layanan Tambahan (Add-ons):</label>
-                  <div className="space-y-2 p-3.5 rounded-2xl bg-black/5 dark:bg-black/30 border border-zinc-200 dark:border-white/5">
+                  <label className="block mb-1.5 font-semibold text-neutral-300">Pilih Layanan Tambahan (Add-ons):</label>
+                  <div className="space-y-2 p-3 rounded-lg bg-[#0e0e0e] border border-neutral-800">
                     {[
                       { id: 'mua', name: 'Professional MUA & Hairdo Session', price: 450000 },
                       { id: 'express', name: 'Retouching Kilat Ekspres 24 Jam', price: 200000 },
@@ -2494,7 +2585,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                     ].map((addon) => {
                       const isChecked = calcSelectedAddons.includes(addon.id);
                       return (
-                        <label key={addon.id} className="flex items-center justify-between cursor-pointer">
+                        <label key={addon.id} className="flex items-center justify-between cursor-pointer text-neutral-300 hover:text-white">
                           <div className="flex items-center gap-2">
                             <input
                               type="checkbox"
@@ -2507,7 +2598,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                             />
                             <span>{addon.name}</span>
                           </div>
-                          <span className="font-mono font-semibold">+Rp {addon.price.toLocaleString('id-ID')}</span>
+                          <span className="font-mono font-semibold text-emerald-400">+Rp {addon.price.toLocaleString('id-ID')}</span>
                         </label>
                       );
                     })}
@@ -2548,28 +2639,28 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   };
 
                   return (
-                    <div className="pt-4 border-t border-zinc-200 dark:border-white/10 space-y-4">
-                      <div className="p-4 rounded-2xl bg-lime-400/10 border border-lime-400/30 flex items-center justify-between">
+                    <div className="pt-3 border-t border-neutral-800 space-y-3">
+                      <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
-                          <span className="text-[10px] font-mono uppercase text-lime-600 dark:text-lime-400 font-bold">
-                            TOTAL PENAWARAN (ESTIMASI)
+                          <span className="text-[10px] font-mono uppercase text-emerald-400 font-semibold tracking-wider">
+                            TOTAL ESTIMASI PENAWARAN
                           </span>
-                          <p className="text-2xl font-black text-lime-600 dark:text-lime-400 mt-0.5">
+                          <p className="text-2xl font-bold font-mono tabular-nums text-white mt-0.5">
                             Rp {grandTotal.toLocaleString('id-ID')}
                           </p>
-                          <p className="text-[11px] text-zinc-400">
+                          <p className="text-[11px] font-mono text-neutral-400">
                             DP 50% Penguncian Slot: Rp {dp50.toLocaleString('id-ID')}
                           </p>
                         </div>
 
-                        <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={copyQuoteText}
-                            className="px-3.5 py-1.5 rounded-full border border-zinc-300 dark:border-white/10 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                            className="px-3 py-1.5 rounded-lg border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
                           >
-                            <Copy className="w-3.5 h-3.5" />
-                            <span>Salin Teks</span>
+                            <Copy className="w-3.5 h-3.5 text-neutral-400" />
+                            <span>Salin</span>
                           </button>
 
                           <a
@@ -2584,11 +2675,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={() => sounds.playShutterSound()}
-                            className="px-4 py-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                            className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
                           >
                             <Phone className="w-3.5 h-3.5" />
                             <span>Kirim WA</span>
-                            <ExternalLink className="w-3 h-3" />
                           </a>
                         </div>
                       </div>
@@ -2599,9 +2689,9 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
             </div>
 
             {/* RIGHT 5-COL: Studio WhatsApp Quick Broadcast & Reminder Center */}
-            <div className={`lg:col-span-5 p-6 rounded-3xl border space-y-6 ${cardBg}`}>
-              <div className="pb-4 border-b border-zinc-200 dark:border-white/10">
-                <h2 className={`text-lg font-bold ${isLight ? 'text-zinc-900' : 'text-white'}`}>
+            <div className={`lg:col-span-5 p-4 sm:p-5 rounded-xl border space-y-4 ${cardBg}`}>
+              <div className="pb-3 border-b border-neutral-800">
+                <h2 className="text-base font-bold text-white tracking-wide">
                   Template Broadcast WhatsApp Studio
                 </h2>
                 <p className={`text-xs ${textMuted}`}>
@@ -2611,7 +2701,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
               {/* Template Type Selector */}
               <div className="space-y-2 text-xs">
-                <label className="block font-semibold">Pilih Jenis Template:</label>
+                <label className="block font-medium text-neutral-300">Pilih Jenis Template:</label>
                 <div className="grid grid-cols-3 gap-1.5">
                   {[
                     { id: 'H1', label: 'Pengingat H-1' },
@@ -2621,12 +2711,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                     <button
                       key={tpl.id}
                       onClick={() => setBroadcastType(tpl.id as any)}
-                      className={`py-2 px-2 rounded-xl font-bold text-center text-[11px] transition-colors cursor-pointer ${
+                      className={`py-2 px-2 rounded-lg text-center text-xs font-medium transition-colors cursor-pointer ${
                         broadcastType === tpl.id
-                          ? 'bg-lime-300 text-zinc-950 font-bold'
-                          : isLight
-                          ? 'bg-zinc-100 text-zinc-600'
-                          : 'bg-white/5 text-zinc-400 hover:text-white'
+                          ? 'bg-white text-black font-semibold shadow-sm'
+                          : 'bg-[#121212] border border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-800'
                       }`}
                     >
                       {tpl.label}
@@ -2636,15 +2724,15 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               </div>
 
               {/* Booking Target Selector */}
-              <div className="space-y-2 text-xs">
-                <label className="block font-semibold">Pilih Klien Tujuan:</label>
+              <div className="space-y-1 text-xs">
+                <label className="block font-semibold text-neutral-300">Pilih Klien Tujuan:</label>
                 <select
                   value={broadcastTargetBooking?.id || ''}
                   onChange={(e) => {
                     const found = bookings.find((b) => b.id === e.target.value);
                     setBroadcastTargetBooking(found || null);
                   }}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                 >
                   <option value="">-- Pilih dari booking aktif --</option>
                   {approvedBookings.map((b) => (
@@ -2656,9 +2744,9 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               </div>
 
               {/* Message Live Preview */}
-              <div className="space-y-2">
-                <span className="text-xs font-semibold text-zinc-400 block">Pratinjau Pesan yang Akan Dikirim:</span>
-                <div className="p-4 rounded-2xl bg-black/10 dark:bg-black/40 border border-zinc-200 dark:border-white/5 text-xs text-zinc-300 font-mono whitespace-pre-line leading-relaxed max-h-64 overflow-y-auto">
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-neutral-400 block">Pratinjau Pesan yang Akan Dikirim:</span>
+                <div className="p-3.5 rounded-lg bg-[#0e0e0e] border border-neutral-800 text-xs text-neutral-300 font-mono whitespace-pre-line leading-relaxed max-h-60 overflow-y-auto">
                   {broadcastTargetBooking ? (
                     broadcastType === 'H1' ? (
                       `Halo Kak *${broadcastTargetBooking.customerName}*!\n\nPengingat ramah dari *${studioSettings.studioName}* bahwa jadwal sesi foto Anda akan berlangsung besok:\n• Tanggal: ${broadcastTargetBooking.date}\n• Jam: *${broadcastTargetBooking.timeSlot}*\n• Layanan: ${broadcastTargetBooking.packageName}\n\n📍 Alamat Studio: ${studioSettings.address}\n\nMohon tiba 15 menit lebih awal. Sampai jumpa besok! ✨`
@@ -2686,11 +2774,11 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => sounds.playShutterSound()}
-                  className="w-full py-2.5 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
                 >
                   <Phone className="w-4 h-4" />
-                  <span>Buka WhatsApp & Kirim Pesan Sekarang</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Buka WhatsApp & Kirim Pesan</span>
+                  <Send className="w-3.5 h-3.5" />
                 </a>
               )}
             </div>
@@ -2700,18 +2788,18 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
         {/* ================= VIEW: STUDIO TO-DO LIST ================= */}
         {activeNav === 'tasks' && (
-          <div className={`p-6 rounded-3xl border ${cardBg} space-y-6`}>
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-white/10">
+          <div className={`p-4 sm:p-5 rounded-xl border ${cardBg} space-y-5`}>
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
               <div>
-                <h2 className="text-lg font-bold">Studio Operational To-Do List</h2>
+                <h2 className="text-base font-bold text-white tracking-wide">Studio Operational To-Do List</h2>
                 <p className={`text-xs ${textMuted}`}>Daftar pekerjaan harian fotografer & kru Diaferastudio.</p>
               </div>
 
               <button
                 onClick={() => setShowAddTaskModal(true)}
-                className="px-4 py-2 rounded-full bg-lime-300 text-zinc-950 font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                className="px-3 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Tambah Pekerjaan Baru</span>
               </button>
             </div>
@@ -2720,26 +2808,30 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               {paginatedTasks.map((task) => (
                 <div
                   key={task.id}
-                  className={`p-4 rounded-2xl border flex items-start justify-between ${
-                    task.isCompleted ? 'opacity-50 line-through' : ''
-                  } ${isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-white/[0.02] border-white/10'}`}
+                  className={`p-3.5 rounded-xl border flex items-start justify-between transition-colors ${
+                    task.isCompleted
+                      ? 'bg-neutral-900/30 border-neutral-850 opacity-50'
+                      : 'bg-[#0c0c0c] border-neutral-800'
+                  }`}
                 >
                   <div className="flex items-start gap-3">
-                    <button onClick={() => toggleTask(task.id)} className="mt-0.5 cursor-pointer text-lime-500">
-                      {task.isCompleted ? <CheckSquare className="w-5 h-5 text-emerald-500" /> : <Square className="w-5 h-5" />}
+                    <button onClick={() => toggleTask(task.id)} className="mt-0.5 cursor-pointer text-neutral-400 hover:text-white">
+                      {task.isCompleted ? <CheckSquare className="w-4 h-4 text-emerald-400" /> : <Square className="w-4 h-4" />}
                     </button>
                     <div>
-                      <p className="text-xs font-semibold">{task.title}</p>
-                      <div className="flex items-center gap-2 text-[10px] font-mono text-zinc-400 mt-1">
-                        <span className="uppercase text-orange-500 font-bold">[{task.category}]</span>
+                      <p className={`text-xs font-semibold ${task.isCompleted ? 'line-through text-neutral-500' : 'text-neutral-100'}`}>
+                        {task.title}
+                      </p>
+                      <div className="flex items-center gap-2 text-[10px] font-mono text-neutral-400 mt-1">
+                        <span className="uppercase text-amber-400 font-semibold">[{task.category}]</span>
                         <span>Deadline: {task.deadline}</span>
                         {task.assignedTo && <span>PIC: {task.assignedTo}</span>}
                       </div>
                     </div>
                   </div>
 
-                  <button onClick={() => deleteTask(task.id)} className="text-zinc-400 hover:text-rose-500 p-1 cursor-pointer">
-                    <Trash2 className="w-4 h-4" />
+                  <button onClick={() => deleteTask(task.id)} className="text-neutral-500 hover:text-rose-400 p-1 cursor-pointer">
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               ))}
@@ -2759,46 +2851,47 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
         {/* ================= VIEW: DIREKTORI KLIEN (CRM) ================= */}
         {activeNav === 'clients' && (
-          <div className={`p-6 rounded-3xl border ${cardBg} space-y-6`}>
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-white/10">
+          <div className={`p-4 sm:p-5 rounded-xl border ${cardBg} space-y-5`}>
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
               <div>
-                <h2 className="text-lg font-bold">Direktori Klien Studio (CRM)</h2>
+                <h2 className="text-base font-bold text-white tracking-wide">Direktori Klien Studio (CRM)</h2>
                 <p className={`text-xs ${textMuted}`}>Daftar pelanggan, riwayat pemotretan, dan direct WhatsApp CRM chat.</p>
               </div>
-              <span className={`text-xs font-mono ${textMuted}`}>{clientDirectory.length} Total Klien</span>
+              <span className="text-xs font-mono text-neutral-400">{clientDirectory.length} Total Klien</span>
             </div>
 
-            <div className="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-white/10">
+            <div className="overflow-x-auto rounded-xl border border-neutral-800 bg-[#0a0a0a]">
               <table className="w-full text-left text-xs">
-                <thead className={`text-[11px] font-mono uppercase border-b ${isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600' : 'bg-white/5 border-white/10 text-zinc-400'}`}>
+                <thead className="text-[10px] font-mono uppercase border-b bg-[#121212] border-neutral-800 text-neutral-400">
                   <tr>
-                    <th className="py-3 px-4">NAMA KLIEN</th>
-                    <th className="py-3 px-4">WHATSAPP</th>
-                    <th className="py-3 px-4">TOTAL BOOKING</th>
-                    <th className="py-3 px-4">LTV (TOTAL BELANJA)</th>
-                    <th className="py-3 px-4">TERAKHIR SESI</th>
-                    <th className="py-3 px-4 text-right">AKSI</th>
+                    <th className="py-2.5 px-3.5">NAMA KLIEN</th>
+                    <th className="py-2.5 px-3.5">WHATSAPP</th>
+                    <th className="py-2.5 px-3.5">TOTAL BOOKING</th>
+                    <th className="py-2.5 px-3.5">LTV (TOTAL BELANJA)</th>
+                    <th className="py-2.5 px-3.5">TERAKHIR SESI</th>
+                    <th className="py-2.5 px-3.5 text-right">AKSI</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-200 dark:divide-white/5">
+                <tbody className="divide-y divide-neutral-850">
                   {paginatedClients.map((client, idx) => (
-                    <tr key={idx} className="hover:bg-black/5 dark:hover:bg-white/[0.02]">
-                      <td className="py-3 px-4 font-semibold">{client.name}</td>
-                      <td className="py-3 px-4 font-mono">{client.phone}</td>
-                      <td className="py-3 px-4 font-mono font-bold">{client.bookingsCount} Sesi</td>
-                      <td className="py-3 px-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                    <tr key={idx} className="hover:bg-[#121212] transition-colors">
+                      <td className="py-2.5 px-3.5 font-semibold text-white">{client.name}</td>
+                      <td className="py-2.5 px-3.5 font-mono text-neutral-300">{client.phone}</td>
+                      <td className="py-2.5 px-3.5 font-mono font-bold text-white">{client.bookingsCount} Sesi</td>
+                      <td className="py-2.5 px-3.5 font-mono font-bold text-emerald-400">
                         Rp {client.totalSpent.toLocaleString('id-ID')}
                       </td>
-                      <td className="py-3 px-4 text-zinc-400 font-mono">{client.lastDate}</td>
-                      <td className="py-3 px-4 text-right">
+                      <td className="py-2.5 px-3.5 text-neutral-400 font-mono">{client.lastDate}</td>
+                      <td className="py-2.5 px-3.5 text-right">
                         <a
                           href={`https://wa.me/${client.phone.replace(/\D/g, '')}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="px-3 py-1 rounded-full bg-emerald-500 text-black font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
+                          className="px-2.5 py-1 rounded-lg border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-emerald-400 font-medium text-xs inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Chat WhatsApp Klien"
                         >
                           <Phone className="w-3 h-3" />
-                          <span>Chat WA</span>
+                          <span>WhatsApp</span>
                         </a>
                       </td>
                     </tr>
@@ -2824,64 +2917,81 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
           <div className="space-y-6">
             {/* Financial Summary Top Bento Banner */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className={`p-5 rounded-3xl border ${cardBg}`}>
-                <span className="text-[10px] font-mono uppercase text-zinc-400 font-bold">TOTAL OMZET PEMASUKAN</span>
-                <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1">
+              <div className={`p-4 rounded-xl border ${cardBg} space-y-2`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase text-slate-400 font-semibold tracking-wider">
+                    TOTAL OMZET PEMASUKAN
+                  </span>
+                  <div className="w-6 h-6 rounded-md bg-emerald-950/60 border border-emerald-800/60 flex items-center justify-center text-emerald-400">
+                    <DollarSign className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold font-mono tabular-nums text-slate-100">
                   Rp {totalRevenue.toLocaleString('id-ID')}
                 </p>
-                <p className={`text-xs ${textMuted} mt-0.5`}>
+                <p className={`text-xs ${textMuted}`}>
                   Dari booking DP & Pelunasan valid
                 </p>
               </div>
 
-              <div className={`p-5 rounded-3xl border ${cardBg}`}>
-                <span className="text-[10px] font-mono uppercase text-rose-500 font-bold">BIAYA OPERASIONAL / PENGELUARAN</span>
-                <p className="text-2xl font-black text-rose-500 mt-1">
+              <div className={`p-4 rounded-xl border ${cardBg} space-y-2`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase text-rose-400 font-semibold tracking-wider">
+                    BIAYA OPERASIONAL / PENGELUARAN
+                  </span>
+                  <div className="w-6 h-6 rounded-md bg-rose-950/60 border border-rose-800/60 flex items-center justify-center text-rose-400">
+                    <TrendingDown className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold font-mono tabular-nums text-rose-400">
                   Rp {totalExpenses.toLocaleString('id-ID')}
                 </p>
-                <p className={`text-xs ${textMuted} mt-0.5`}>
-                  Honor editor, cetak lab, listrik & perlengkapan
+                <p className={`text-xs ${textMuted}`}>
+                  Honor tim/editor, cetak lab, listrik & maintenance
                 </p>
               </div>
 
-              <div className={`p-5 rounded-3xl border ${cardBg}`}>
-                <span className="text-[10px] font-mono uppercase text-lime-600 dark:text-lime-400 font-bold">ESTIMASI LABA BERSIH (NET PROFIT)</span>
-                <p className="text-2xl font-black text-lime-600 dark:text-lime-400 mt-1">
+              <div className={`p-4 rounded-xl border ${cardBg} space-y-2`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-mono uppercase text-sky-400 font-semibold tracking-wider">
+                    ESTIMASI LABA BERSIH (NET PROFIT)
+                  </span>
+                  <div className="w-6 h-6 rounded-md bg-sky-950/60 border border-sky-800/60 flex items-center justify-center text-sky-400">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold font-mono tabular-nums text-sky-400">
                   Rp {netProfit.toLocaleString('id-ID')}
                 </p>
-                <p className={`text-xs ${textMuted} mt-0.5`}>
-                  Margin keuntungan bersih studio
+                <p className={`text-xs ${textMuted}`}>
+                  Margin keuntungan bersih operasional studio
                 </p>
               </div>
             </div>
 
-            <div className={`p-6 rounded-3xl border ${cardBg} space-y-6`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200 dark:border-white/10">
+            <div className={`p-5 rounded-xl border ${cardBg} space-y-5`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800/80">
                 <div className="space-y-2">
-                  <h2 className="text-lg font-bold">Laporan & Pembukuan Kas Studio</h2>
+                  <h2 className="text-base font-bold text-slate-100">Laporan & Pembukuan Kas Studio</h2>
                   
                   {/* Tab Switcher: Bookings vs Expenses */}
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setTrxTab('bookings')}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                         trxTab === 'bookings'
-                          ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                          : isLight
-                          ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                          : 'bg-white/5 text-zinc-400 hover:text-white'
+                          ? 'bg-slate-100 text-slate-950 shadow-sm'
+                          : 'bg-slate-800/80 text-slate-300 border border-slate-700/60 hover:bg-slate-700'
                       }`}
                     >
                       Pemasukan Booking ({filteredBookings.length})
                     </button>
                     <button
                       onClick={() => setTrxTab('expenses')}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
                         trxTab === 'expenses'
-                          ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 shadow-sm'
-                          : isLight
-                          ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                          : 'bg-white/5 text-zinc-400 hover:text-white'
+                          ? 'bg-slate-100 text-slate-950 shadow-sm'
+                          : 'bg-slate-800/80 text-slate-300 border border-slate-700/60 hover:bg-slate-700'
                       }`}
                     >
                       Pengeluaran Kas ({expenses.length})
@@ -2893,69 +3003,69 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   {trxTab === 'expenses' && (
                     <button
                       onClick={() => setShowAddExpenseModal(true)}
-                      className="px-4 py-2 rounded-full bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-3.5 h-3.5" />
                       <span>Catat Pengeluaran</span>
                     </button>
                   )}
 
                   <button
                     onClick={handleExportCSV}
-                    className="px-4 py-2 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700 font-medium text-xs flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
                   >
-                    <FileSpreadsheet className="w-4 h-4" />
-                    <span>Download File CSV</span>
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Download CSV</span>
                   </button>
                 </div>
               </div>
 
               {/* TAB 1: BOOKING REVENUE */}
               {trxTab === 'bookings' && (
-                <div className="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-white/10">
+                <div className="overflow-x-auto rounded-xl border border-neutral-800 bg-[#0a0a0a]">
                   <table className="w-full text-left text-xs">
-                    <thead className={`text-[11px] font-mono uppercase border-b ${isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600' : 'bg-white/5 border-white/10 text-zinc-400'}`}>
+                    <thead className="text-[10px] font-mono uppercase border-b bg-[#121212] border-neutral-800 text-neutral-400">
                       <tr>
-                        <th className="py-3 px-4">ID BOOKING</th>
-                        <th className="py-3 px-4">PELANGGAN</th>
-                        <th className="py-3 px-4">LAYANAN</th>
-                        <th className="py-3 px-4">JADWAL</th>
-                        <th className="py-3 px-4">STATUS</th>
-                        <th className="py-3 px-4">PEMBAYARAN</th>
-                        <th className="py-3 px-4">TOTAL</th>
-                        <th className="py-3 px-4 text-right">AKSI</th>
+                        <th className="py-2.5 px-3.5">ID BOOKING</th>
+                        <th className="py-2.5 px-3.5">PELANGGAN</th>
+                        <th className="py-2.5 px-3.5">LAYANAN</th>
+                        <th className="py-2.5 px-3.5">JADWAL</th>
+                        <th className="py-2.5 px-3.5">STATUS</th>
+                        <th className="py-2.5 px-3.5">PEMBAYARAN</th>
+                        <th className="py-2.5 px-3.5">TOTAL</th>
+                        <th className="py-2.5 px-3.5 text-right">AKSI</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-200 dark:divide-white/5">
+                    <tbody className="divide-y divide-neutral-850">
                       {paginatedBookings.map((b) => (
-                        <tr key={b.id} className="hover:bg-black/5 dark:hover:bg-white/[0.02]">
-                          <td className="py-3 px-4 font-mono font-bold text-orange-500">#{b.id}</td>
-                          <td className="py-3 px-4 font-semibold">{b.customerName}</td>
-                          <td className="py-3 px-4">{b.packageName}</td>
-                          <td className="py-3 px-4 font-mono">{b.date} ({b.timeSlot})</td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              b.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                        <tr key={b.id} className="hover:bg-[#121212] transition-colors">
+                          <td className="py-2.5 px-3.5 font-mono font-bold text-amber-400">#{b.id}</td>
+                          <td className="py-2.5 px-3.5 font-semibold text-white">{b.customerName}</td>
+                          <td className="py-2.5 px-3.5 text-neutral-300">{b.packageName}</td>
+                          <td className="py-2.5 px-3.5 font-mono text-neutral-300">{b.date} ({b.timeSlot})</td>
+                          <td className="py-2.5 px-3.5">
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold ${
+                              b.status === 'APPROVED' ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-900/60' : 'bg-amber-950/60 text-amber-300 border border-amber-900/60'
                             }`}>
                               {b.status}
                             </span>
                           </td>
-                          <td className="py-3 px-4 font-mono">
+                          <td className="py-2.5 px-3.5 font-mono text-neutral-300">
                             {b.paymentStatus === 'PAID_FULL' ? 'LUNAS (100%)' : `DP (Rp ${b.dpAmount.toLocaleString('id-ID')})`}
                             {b.paymentStatus === 'DP_PAID' && (
                               <button
                                 onClick={() => onUpdatePaymentStatus(b.id, 'PAID_FULL')}
-                                className="ml-2 text-[10px] text-orange-500 underline cursor-pointer"
+                                className="ml-2 text-[10px] text-amber-400 hover:text-amber-300 underline cursor-pointer"
                               >
                                 [Lunas]
                               </button>
                             )}
                           </td>
-                          <td className="py-3 px-4 font-mono font-bold">Rp {b.totalPrice.toLocaleString('id-ID')}</td>
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-2.5 px-3.5 font-mono font-bold text-white">Rp {b.totalPrice.toLocaleString('id-ID')}</td>
+                          <td className="py-2.5 px-3.5 text-right">
                             <button
                               onClick={() => setReceiptBooking(b)}
-                              className="p-1.5 rounded-full bg-zinc-200 dark:bg-white/10 cursor-pointer"
+                              className="p-1.5 rounded-lg border border-neutral-800 bg-[#121212] hover:bg-neutral-800 text-sky-400 hover:text-white transition-colors cursor-pointer"
                               title="Invoice Kwitansi"
                             >
                               <Eye className="w-3.5 h-3.5" />
@@ -2980,37 +3090,37 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
               {/* TAB 2: EXPENSES / PENGELUARAN KAS */}
               {trxTab === 'expenses' && (
-                <div className="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-white/10 p-2">
+                <div className="overflow-x-auto rounded-xl border border-neutral-800 bg-[#0a0a0a]">
                   <table className="w-full text-left text-xs">
-                    <thead className={`text-[11px] font-mono uppercase border-b ${isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-600' : 'bg-white/5 border-white/10 text-zinc-400'}`}>
+                    <thead className="text-[10px] font-mono uppercase border-b bg-[#121212] border-neutral-800 text-neutral-400">
                       <tr>
-                        <th className="py-3 px-4">TANGGAL</th>
-                        <th className="py-3 px-4">KETERANGAN / DESKRIPSI</th>
-                        <th className="py-3 px-4">KATEGORI</th>
-                        <th className="py-3 px-4">DIBAYAR OLEH</th>
-                        <th className="py-3 px-4">NOMINAL</th>
-                        <th className="py-3 px-4 text-right">AKSI</th>
+                        <th className="py-2.5 px-3.5">TANGGAL</th>
+                        <th className="py-2.5 px-3.5">KETERANGAN / DESKRIPSI</th>
+                        <th className="py-2.5 px-3.5">KATEGORI</th>
+                        <th className="py-2.5 px-3.5">DIBAYAR OLEH</th>
+                        <th className="py-2.5 px-3.5">NOMINAL</th>
+                        <th className="py-2.5 px-3.5 text-right">AKSI</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-200 dark:divide-white/5">
+                    <tbody className="divide-y divide-neutral-850">
                       {paginatedExpenses.map((exp) => (
-                        <tr key={exp.id} className="hover:bg-black/5 dark:hover:bg-white/[0.02]">
-                          <td className="py-3 px-4 font-mono text-zinc-400">{exp.date}</td>
-                          <td className="py-3 px-4">
-                            <span className="font-semibold block">{exp.title}</span>
+                        <tr key={exp.id} className="hover:bg-[#121212] transition-colors">
+                          <td className="py-2.5 px-3.5 font-mono text-neutral-400">{exp.date}</td>
+                          <td className="py-2.5 px-3.5">
+                            <span className="font-semibold block text-white">{exp.title}</span>
                             {exp.notes && <span className={`text-[10px] ${textMuted} italic`}>{exp.notes}</span>}
                           </td>
-                          <td className="py-3 px-4 font-mono uppercase text-orange-500 font-bold text-[10px]">
+                          <td className="py-2.5 px-3.5 font-mono uppercase text-amber-400 font-bold text-[10px]">
                             [{exp.category}]
                           </td>
-                          <td className="py-3 px-4">{exp.paidBy}</td>
-                          <td className="py-3 px-4 font-mono font-bold text-rose-500">
+                          <td className="py-2.5 px-3.5 text-neutral-300">{exp.paidBy}</td>
+                          <td className="py-2.5 px-3.5 font-mono font-bold text-rose-400">
                             - Rp {exp.amount.toLocaleString('id-ID')}
                           </td>
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-2.5 px-3.5 text-right">
                             <button
                               onClick={() => handleDeleteExpense(exp.id)}
-                              className="p-1.5 text-zinc-400 hover:text-rose-500 cursor-pointer"
+                              className="p-1.5 rounded-lg border border-neutral-800 bg-[#121212] hover:bg-rose-950/20 text-neutral-400 hover:text-rose-400 transition-colors cursor-pointer"
                               title="Hapus Pengeluaran"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
@@ -3038,10 +3148,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
         {/* ================= VIEW: PORTOFOLIO CRUD ================= */}
         {activeNav === 'portfolio' && (
-          <div className={`p-6 rounded-3xl border ${cardBg} space-y-6`}>
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-200 dark:border-white/10">
+          <div className={`p-4 sm:p-5 rounded-xl border ${cardBg} space-y-5`}>
+            <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
               <div>
-                <h2 className="text-lg font-bold">Kelola Galeri Portofolio Studio</h2>
+                <h2 className="text-base font-bold text-white tracking-wide">Kelola Galeri Portofolio Studio</h2>
                 <p className={`text-xs ${textMuted}`}>Tambah karya, update deskripsi teknis, atau hapus item dari galeri web.</p>
               </div>
 
@@ -3061,25 +3171,25 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   });
                   setPortfolioModalOpen(true);
                 }}
-                className="px-4 py-2 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-bold text-xs flex items-center gap-1.5 shadow-sm"
+                className="px-3 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Tambah Karya Baru</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {paginatedPortfolio.map((item) => (
-                <div key={item.id} className="rounded-2xl border border-zinc-200 dark:border-white/10 overflow-hidden flex flex-col justify-between">
+                <div key={item.id} className="rounded-xl border border-neutral-800 bg-[#0c0c0c] hover:border-neutral-700 transition-colors overflow-hidden flex flex-col justify-between">
                   <div className="aspect-[16/10] bg-black">
                     <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                   </div>
-                  <div className="p-4 space-y-1">
-                    <span className="text-[10px] font-mono uppercase text-orange-500 font-bold">[{item.category}]</span>
-                    <h3 className="font-bold text-sm truncate">{item.title}</h3>
+                  <div className="p-3.5 space-y-1">
+                    <span className="text-[10px] font-mono uppercase text-amber-400 font-semibold">[{item.category}]</span>
+                    <h3 className="font-bold text-sm text-white truncate">{item.title}</h3>
                     <p className={`text-xs ${textMuted} line-clamp-2`}>{item.description}</p>
                   </div>
-                  <div className="p-3 border-t border-zinc-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-2">
+                  <div className="p-3 border-t border-neutral-850 flex flex-wrap items-center justify-between gap-2">
                     <button
                       type="button"
                       onClick={() => {
@@ -3087,11 +3197,11 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                         setQuickPhotoItem(item);
                         setQuickPhotoUrl(item.imageUrl);
                       }}
-                      className="px-3 py-1 rounded-full bg-lime-300 hover:bg-lime-200 text-zinc-950 text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-sm"
+                      className="px-2.5 py-1 rounded-lg border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
                       title="Ganti URL gambar dari Instagram / Web"
                     >
-                      <ImageIcon className="w-3 h-3" />
-                      <span>Ganti Link Foto</span>
+                      <ImageIcon className="w-3 h-3 text-sky-400" />
+                      <span>Ganti Link</span>
                     </button>
 
                     <div className="flex items-center gap-1.5">
@@ -3111,7 +3221,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                           });
                           setPortfolioModalOpen(true);
                         }}
-                        className="px-3 py-1 rounded-full bg-zinc-200 dark:bg-white/10 text-xs font-medium cursor-pointer hover:bg-zinc-300 dark:hover:bg-white/20 transition-colors"
+                        className="px-2.5 py-1 rounded-lg border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs font-medium cursor-pointer transition-colors"
                       >
                         Edit
                       </button>
@@ -3119,9 +3229,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                         onClick={() => {
                           if (confirm(`Hapus karya "${item.title}"?`)) onDeletePortfolio(item.id);
                         }}
-                        className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-500 text-xs font-medium cursor-pointer hover:bg-rose-500/30 transition-colors"
+                        className="p-1.5 rounded-lg border border-rose-950/60 bg-rose-950/20 text-rose-400 hover:bg-rose-950/40 text-xs transition-colors cursor-pointer"
+                        title="Hapus Karya"
                       >
-                        Hapus
+                        <Trash2 className="w-3 h-3" />
                       </button>
                     </div>
                   </div>
@@ -3143,20 +3254,20 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
         {/* ================= VIEW: PENGATURAN STUDIO ================= */}
         {activeNav === 'settings' && (
-          <div className={`p-6 rounded-3xl border ${cardBg} space-y-6 max-w-2xl`}>
-            <div className="pb-4 border-b border-zinc-200 dark:border-white/10">
-              <h2 className="text-lg font-bold">Pengaturan Studio & Akun</h2>
-              <p className={`text-xs ${textMuted}`}>Perbarui nama studio, WhatsApp kontak, dan rekening bank.</p>
+          <div className={`p-4 sm:p-5 rounded-xl border ${cardBg} space-y-5 max-w-2xl`}>
+            <div className="pb-3 border-b border-neutral-800">
+              <h2 className="text-base font-bold text-white tracking-wide">Pengaturan Studio & Akun</h2>
+              <p className={`text-xs ${textMuted}`}>Perbarui nama studio, WhatsApp kontak, dan rekening bank pembayaran.</p>
             </div>
 
             {/* Quick Link Card to Admin Profile & Security */}
-            <div className={`p-4 rounded-2xl border ${isLight ? 'bg-amber-50 border-amber-200' : 'bg-amber-500/10 border-amber-500/30'} flex items-center justify-between gap-4`}>
+            <div className="p-3.5 rounded-xl border bg-amber-950/20 border-amber-900/40 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-500 shrink-0">
-                  <ShieldCheck className="w-5 h-5" />
+                <div className="p-2 rounded-lg bg-amber-950/40 border border-amber-900/50 text-amber-400 shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-bold text-xs text-zinc-900 dark:text-white">Profil & Keamanan Pengelola Admin</p>
+                  <p className="font-bold text-xs text-white">Profil & Keamanan Pengelola Admin</p>
                   <p className={`text-[11px] ${textMuted}`}>Ubah nama, peran, kontak, foto profil, dan password / PIN masuk admin.</p>
                 </div>
               </div>
@@ -3166,9 +3277,9 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   sounds.playSeatClickSound();
                   setActiveNav('profile');
                 }}
-                className="px-3.5 py-1.5 rounded-xl bg-lime-300 hover:bg-lime-200 text-zinc-950 font-bold text-xs transition-colors shrink-0 shadow-sm cursor-pointer"
+                className="px-3 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs transition-colors shrink-0 shadow-sm cursor-pointer"
               >
-                Ubah Profil & PIN
+                Ubah PIN
               </button>
             </div>
 
@@ -3184,60 +3295,60 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               className="space-y-4 text-xs"
             >
               <div className="space-y-1">
-                <label className="font-bold">Nama Studio</label>
+                <label className="font-semibold text-neutral-300">Nama Studio</label>
                 <input
                   type="text"
                   value={settingsForm.studioName}
                   onChange={(e) => setSettingsForm({ ...settingsForm, studioName: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold">Nomor WhatsApp Studio</label>
+                <label className="font-semibold text-neutral-300">Nomor WhatsApp Studio</label>
                 <input
                   type="text"
                   value={settingsForm.whatsappNumber}
                   onChange={(e) => setSettingsForm({ ...settingsForm, whatsappNumber: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl font-mono ${inputBg}`}
+                  className={`w-full px-3 py-1.5 rounded-lg font-mono ${inputBg}`}
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="font-bold">Alamat Lengkap</label>
+                <label className="font-semibold text-neutral-300">Alamat Lengkap</label>
                 <input
                   type="text"
                   value={settingsForm.address}
                   onChange={(e) => setSettingsForm({ ...settingsForm, address: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="font-bold">Bank Penerima DP</label>
+                  <label className="font-semibold text-neutral-300">Bank Penerima DP</label>
                   <input
                     type="text"
                     value={settingsForm.bankName}
                     onChange={(e) => setSettingsForm({ ...settingsForm, bankName: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-bold">Nomor Rekening</label>
+                  <label className="font-semibold text-neutral-300">Nomor Rekening</label>
                   <input
                     type="text"
                     value={settingsForm.bankAccountNumber}
                     onChange={(e) => setSettingsForm({ ...settingsForm, bankAccountNumber: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl font-mono ${inputBg}`}
+                    className={`w-full px-3 py-1.5 rounded-lg font-mono ${inputBg}`}
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5 pt-2 border-t border-zinc-200 dark:border-white/10">
-                <label className="font-bold flex items-center justify-between">
-                  <span>URL Gambar Background 4K Hero Beranda</span>
-                  <span className="text-[10px] font-mono text-zinc-400">Resolusi Tinggi / 4K</span>
+              <div className="space-y-2 pt-2 border-t border-neutral-800">
+                <label className="font-semibold text-neutral-300 flex items-center justify-between">
+                  <span>URL Background 4K Hero Beranda</span>
+                  <span className="text-[10px] font-mono text-neutral-400">Resolusi 4K</span>
                 </label>
                 <div className="flex gap-2">
                   <input
@@ -3245,7 +3356,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                     placeholder="https://... atau /images/..."
                     value={settingsForm.heroBackgroundImageUrl || ''}
                     onChange={(e) => setSettingsForm({ ...settingsForm, heroBackgroundImageUrl: e.target.value })}
-                    className={`flex-1 px-3.5 py-2 rounded-xl font-mono text-[11px] ${inputBg}`}
+                    className={`flex-1 px-3 py-1.5 rounded-lg font-mono text-[11px] ${inputBg}`}
                   />
                   <button
                     type="button"
@@ -3257,18 +3368,15 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                       setSettingsSavedToast(true);
                       setTimeout(() => setSettingsSavedToast(false), 3000);
                     }}
-                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-colors shrink-0 cursor-pointer"
+                    className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs transition-colors shrink-0 cursor-pointer"
                   >
-                    Terapkan Sekarang
+                    Terapkan
                   </button>
                 </div>
-                <p className={`text-[10px] ${textMuted}`}>
-                  Latar belakang atmosferik di bagian atas beranda belakang tulisan Diaféra Studio. Masukkan direct image link dari Instagram, CDN, atau web (4K).
-                </p>
 
                 {/* Quick 4K Presets */}
                 <div className="space-y-1 pt-1">
-                  <p className="text-[10px] font-mono text-zinc-400 uppercase">Pilihan Preset 4K Cepat:</p>
+                  <p className="text-[10px] font-mono text-neutral-400 uppercase">Pilihan Preset Cepat:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {[
                       { label: 'Cinematic Dark Studio 4K', url: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=2670&auto=format&fit=crop' },
@@ -3283,12 +3391,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                           sounds.playSeatClickSound();
                           setSettingsForm({ ...settingsForm, heroBackgroundImageUrl: preset.url });
                         }}
-                        className={`px-2.5 py-1 rounded-lg border text-[10px] transition-colors cursor-pointer ${
+                        className={`px-2 py-1 rounded-md border text-[10px] font-mono transition-colors cursor-pointer ${
                           settingsForm.heroBackgroundImageUrl === preset.url
-                            ? 'bg-blue-600 text-white border-blue-500 font-semibold'
-                            : isLight
-                            ? 'bg-zinc-100 hover:bg-zinc-200 border-zinc-200 text-zinc-700'
-                            : 'bg-white/5 hover:bg-white/10 border-white/10 text-zinc-300'
+                            ? 'bg-white text-black border-white font-bold'
+                            : 'bg-[#121212] border-neutral-800 text-neutral-400 hover:text-white hover:bg-neutral-800'
                         }`}
                       >
                         {preset.label}
@@ -3298,7 +3404,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 </div>
 
                 {settingsForm.heroBackgroundImageUrl && (
-                  <div className="w-full sm:w-72 h-32 rounded-xl overflow-hidden border border-zinc-200 dark:border-white/10 relative mt-2 bg-black shadow-inner">
+                  <div className="w-full sm:w-72 h-32 rounded-lg overflow-hidden border border-neutral-800 relative mt-2 bg-black shadow-inner">
                     <img
                       src={settingsForm.heroBackgroundImageUrl}
                       alt="Thumbnail Hero 4K"
@@ -3309,22 +3415,22 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                     />
                     <div className="absolute inset-0 bg-black/45" />
                     <div className="absolute bottom-2 left-2 right-2 text-[10px] text-white/90 font-mono bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm truncate">
-                      Pratinjau Hero: {settingsForm.heroBackgroundImageUrl}
+                      Pratinjau: {settingsForm.heroBackgroundImageUrl}
                     </div>
                   </div>
                 )}
               </div>
 
               {/* Kelola 5 Foto Showcase Beranda (Preview Cards 4K) */}
-              <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-white/10">
+              <div className="space-y-3 pt-3 border-t border-neutral-800">
                 <div className="flex items-center justify-between">
                   <div>
-                    <label className="font-bold text-xs flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-blue-500" />
-                      <span>5 Foto Showcase Beranda (Preview Cards 4K)</span>
+                    <label className="font-semibold text-xs flex items-center gap-1.5 text-white">
+                      <Layers className="w-3.5 h-3.5 text-sky-400" />
+                      <span>5 Foto Showcase Beranda (Preview Cards)</span>
                     </label>
                     <p className={`text-[10px] ${textMuted} mt-0.5`}>
-                      Ubah tautan 5 foto kartu di bagian awal beranda (mendukung direct link Instagram, CDN, Unsplash, atau link web apa pun).
+                      Ubah tautan 5 foto kartu di bagian awal beranda.
                     </p>
                   </div>
                   <button
@@ -3333,22 +3439,20 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                       sounds.playSeatClickSound();
                       setSettingsForm({ ...settingsForm, heroCards: DEFAULT_HERO_CARDS });
                     }}
-                    className="text-[10px] font-mono text-zinc-400 hover:text-white flex items-center gap-1 cursor-pointer"
+                    className="text-[10px] font-mono text-neutral-400 hover:text-white flex items-center gap-1 cursor-pointer"
                   >
                     <RotateCcw className="w-3 h-3" />
-                    <span>Reset Default 4K</span>
+                    <span>Reset Default</span>
                   </button>
                 </div>
 
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {(settingsForm.heroCards || DEFAULT_HERO_CARDS).map((card, idx) => (
                     <div
                       key={card.id || idx}
-                      className={`p-2.5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center gap-3 ${
-                        isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-black/40 border-white/10'
-                      }`}
+                      className="p-2.5 rounded-lg border border-neutral-800 bg-[#0c0c0c] flex flex-col sm:flex-row items-start sm:items-center gap-3"
                     >
-                      <div className="w-12 h-14 rounded-lg overflow-hidden border border-zinc-200 dark:border-white/10 shrink-0 bg-black relative">
+                      <div className="w-12 h-14 rounded-md overflow-hidden border border-neutral-800 shrink-0 bg-black relative">
                         <img
                           src={card.imageUrl}
                           alt={card.title}
@@ -3361,8 +3465,8 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                       </div>
                       <div className="flex-1 w-full min-w-0 space-y-1">
                         <div className="flex items-center justify-between text-[11px]">
-                          <span className="font-bold truncate">#{idx + 1} {card.title}</span>
-                          <span className={`text-[9px] font-mono ${textMuted}`}>{card.concept}</span>
+                          <span className="font-semibold text-white truncate">#{idx + 1} {card.title}</span>
+                          <span className="text-[9px] font-mono text-neutral-400">{card.concept}</span>
                         </div>
                         <input
                           type="text"
@@ -3373,7 +3477,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                             setSettingsForm({ ...settingsForm, heroCards: current });
                           }}
                           placeholder="https://..."
-                          className={`w-full px-2.5 py-1 rounded-lg font-mono text-[10px] ${inputBg}`}
+                          className={`w-full px-2.5 py-1 rounded-md font-mono text-[10px] ${inputBg}`}
                         />
                       </div>
                     </div>
@@ -3382,14 +3486,14 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               </div>
 
               {settingsSavedToast && (
-                <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-medium">
+                <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-900/60 text-emerald-300 font-medium">
                   Pengaturan berhasil disimpan!
                 </div>
               )}
 
               <button
                 type="submit"
-                className="px-6 py-2.5 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-bold shadow-sm"
+                className="px-4 py-2 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs shadow-sm transition-colors cursor-pointer"
               >
                 Simpan Perubahan
               </button>
@@ -3404,8 +3508,8 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-5 h-5 text-lime-500" />
-                  <h2 className="text-xl font-bold tracking-tight">Profil & Keamanan Pengelola</h2>
+                  <ShieldCheck className="w-5 h-5 text-emerald-400" />
+                  <h2 className="text-xl font-bold tracking-tight text-slate-100">Profil & Keamanan Pengelola</h2>
                 </div>
                 <p className={`text-xs ${textMuted} mt-1`}>
                   Kelola data identitas resmi admin, foto profil, kontak, kredensial password, dan keamanan sesi Diafera Studio.
@@ -3416,18 +3520,14 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 <button
                   type="button"
                   onClick={handleResetDefaultProfile}
-                  className={`px-3.5 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                    isLight
-                      ? 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100'
-                      : 'border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10'
-                  }`}
+                  className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white text-xs font-medium transition-all cursor-pointer"
                 >
-                  Reset ke Default
+                  Reset Default
                 </button>
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="px-3.5 py-2 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg border border-rose-900/60 bg-rose-950/30 hover:bg-rose-950/50 text-rose-300 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Kunci / Logout</span>
@@ -3436,46 +3536,44 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
             </div>
 
             {/* Admin Overview & Avatar Banner */}
-            <div className={`p-6 rounded-3xl border ${cardBg} relative overflow-hidden`}>
-              <div className="absolute top-0 right-0 w-96 h-96 bg-lime-400/5 rounded-full blur-3xl pointer-events-none" />
-
+            <div className={`p-6 rounded-xl border ${cardBg} relative overflow-hidden`}>
               <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
                 {/* Avatar Preview */}
                 <div className="relative group shrink-0">
-                  <div className="w-24 h-24 rounded-3xl overflow-hidden border-2 border-lime-400 shadow-xl bg-zinc-800">
+                  <div className="w-20 h-20 rounded-xl overflow-hidden border border-slate-700 shadow-xl bg-slate-800">
                     <img
                       src={profileForm.avatarUrl || HERO_STUDIO_IMAGE}
                       alt={profileForm.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  <div className="absolute -bottom-2 -right-2 p-1.5 rounded-xl bg-lime-400 text-zinc-950 font-bold shadow">
-                    <Shield className="w-4 h-4" />
+                  <div className="absolute -bottom-1 -right-1 p-1 rounded-md bg-slate-900 border border-slate-700 text-emerald-400 font-bold shadow">
+                    <Shield className="w-3.5 h-3.5" />
                   </div>
                 </div>
 
                 {/* Info Text */}
                 <div className="flex-1 space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-lime-400/20 text-lime-600 dark:text-lime-400 text-[10px] font-mono font-bold uppercase tracking-wider">
-                      Superadmin &bull; Owner
+                    <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 border border-slate-700 text-[10px] font-mono font-semibold uppercase tracking-wider">
+                      SUPERADMIN &bull; OWNER
                     </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-semibold flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-950/60 text-emerald-400 border border-emerald-800/60 text-[10px] font-mono font-medium flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       Sesi Terautentikasi Aktif
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-bold">{adminProfile.name || 'Raihan Gusti'}</h3>
+                  <h3 className="text-lg font-bold text-slate-100">{adminProfile.name || 'Raihan Gusti'}</h3>
                   <p className={`text-xs ${textMuted}`}>{adminProfile.role || 'Lead Photographer & Studio Director'}</p>
 
                   <div className="pt-2 flex flex-wrap gap-4 text-xs font-mono">
-                    <div className="flex items-center gap-1.5 text-zinc-400">
-                      <Phone className="w-3.5 h-3.5 text-lime-500" />
+                    <div className="flex items-center gap-1.5 text-slate-300">
+                      <Phone className="w-3.5 h-3.5 text-emerald-400" />
                       <span>{adminProfile.phone || '0812-8900-4512'}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-zinc-400">
-                      <Clock className="w-3.5 h-3.5 text-amber-500" />
+                    <div className="flex items-center gap-1.5 text-slate-400">
+                      <Clock className="w-3.5 h-3.5 text-amber-400" />
                       <span>Login: {adminProfile.lastLoginAt ? new Date(adminProfile.lastLoginAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB' : 'Aktif'}</span>
                     </div>
                   </div>
@@ -3483,9 +3581,9 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               </div>
 
               {/* Quick Avatar Presets */}
-              <div className="mt-6 pt-5 border-t border-zinc-200/60 dark:border-white/10">
-                <p className="text-[11px] font-bold mb-3 flex items-center gap-1.5">
-                  <Camera className="w-3.5 h-3.5 text-lime-500" />
+              <div className="mt-6 pt-5 border-t border-slate-800/80">
+                <p className="text-[11px] font-semibold text-slate-300 mb-3 flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-sky-400" />
                   <span>Pilih Preset Foto Profil Admin:</span>
                 </p>
                 <div className="flex flex-wrap gap-2.5">
@@ -3503,12 +3601,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                         sounds.playSeatClickSound();
                         setProfileForm((prev) => ({ ...prev, avatarUrl: preset.url }));
                       }}
-                      className={`px-3 py-1.5 rounded-xl border text-[11px] font-medium flex items-center gap-2 transition-all cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg border text-[11px] font-medium flex items-center gap-2 transition-all cursor-pointer ${
                         profileForm.avatarUrl === preset.url
-                          ? 'border-lime-400 bg-lime-400/20 text-lime-600 dark:text-lime-300 font-bold'
-                          : isLight
-                          ? 'border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-100'
-                          : 'border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10'
+                          ? 'border-sky-500 bg-sky-500/20 text-sky-300 font-semibold'
+                          : 'border-slate-800 bg-slate-900/60 text-slate-400 hover:text-white hover:border-slate-700'
                       }`}
                     >
                       <div className="w-4 h-4 rounded-full overflow-hidden shrink-0">
@@ -3526,12 +3622,12 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs flex items-center gap-3 font-medium"
+                className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-xs flex items-center gap-3 font-medium"
               >
-                <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
+                <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
                 <div>
-                  <p className="font-bold text-sm">Profil & Kredensial Berhasil Disimpan!</p>
-                  <p className="text-[11px] opacity-90">Data profil admin dan hak akses sistem telah diperbarui dan langsung aktif.</p>
+                  <p className="font-bold text-sm text-slate-100">Profil & Kredensial Berhasil Disimpan!</p>
+                  <p className="text-[11px] text-slate-400">Data profil admin dan hak akses sistem telah diperbarui dan langsung aktif.</p>
                 </div>
               </motion.div>
             )}
@@ -3540,12 +3636,12 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-3 font-medium"
+                className="p-4 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs flex items-center gap-3 font-medium"
               >
-                <AlertCircle className="w-5 h-5 shrink-0 text-rose-500" />
+                <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
                 <div>
-                  <p className="font-bold text-sm">Gagal Menyimpan</p>
-                  <p className="text-[11px]">{profileError}</p>
+                  <p className="font-bold text-sm text-slate-100">Gagal Menyimpan</p>
+                  <p className="text-[11px] text-slate-400">{profileError}</p>
                 </div>
               </motion.div>
             )}
@@ -3555,10 +3651,10 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 {/* Left Card: Identitas Profil Admin */}
-                <div className={`p-6 rounded-3xl border ${cardBg} space-y-4`}>
-                  <div className="pb-3 border-b border-zinc-200/60 dark:border-white/10 flex items-center gap-2">
-                    <User className="w-4 h-4 text-lime-500" />
-                    <h4 className="font-bold text-sm">Data Identitas Admin</h4>
+                <div className={`p-6 rounded-xl border ${cardBg} space-y-4`}>
+                  <div className="pb-3 border-b border-slate-800/80 flex items-center gap-2">
+                    <User className="w-4 h-4 text-sky-400" />
+                    <h4 className="font-bold text-sm text-slate-100">Data Identitas Admin</h4>
                   </div>
 
                   <div className="space-y-3.5 text-xs">
@@ -3648,15 +3744,15 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 </div>
 
                 {/* Right Card: Kredensial Keamanan & Sesi */}
-                <div className={`p-6 rounded-3xl border ${cardBg} space-y-4 flex flex-col justify-between`}>
+                <div className={`p-5 rounded-xl border ${cardBg} space-y-4 flex flex-col justify-between`}>
                   <div>
-                    <div className="pb-3 border-b border-zinc-200/60 dark:border-white/10 flex items-center gap-2">
+                    <div className="pb-3 border-b border-neutral-800 flex items-center gap-2">
                       <Lock className="w-4 h-4 text-amber-500" />
                       <h4 className="font-bold text-sm">Keamanan & Password Admin</h4>
                     </div>
 
                     <div className="space-y-3.5 text-xs pt-3">
-                      <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px] flex items-start gap-2">
+                      <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[11px] flex items-start gap-2">
                         <Key className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
                         <div>
                           <p className="font-bold">Ubah Password / PIN Masuk</p>
@@ -3751,20 +3847,20 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   </div>
 
                   {/* Security Status Box */}
-                  <div className={`p-3.5 rounded-2xl border text-[11px] space-y-2 mt-4 ${isLight ? 'bg-zinc-100 border-zinc-200' : 'bg-white/[0.03] border-white/10'}`}>
+                  <div className={`p-3.5 rounded-lg border text-[11px] space-y-2 mt-4 ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/60 border-slate-800'}`}>
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold flex items-center gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="font-semibold flex items-center gap-1.5 text-slate-300">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
                         <span>Brute Force Limiter</span>
                       </span>
-                      <span className="text-emerald-500 font-bold font-mono">Aktif (5x max)</span>
+                      <span className="text-emerald-400 font-bold font-mono">Aktif (5x max)</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold flex items-center gap-1.5">
-                        <Lock className="w-3.5 h-3.5 text-lime-500" />
+                      <span className="font-semibold flex items-center gap-1.5 text-slate-300">
+                        <Lock className="w-3.5 h-3.5 text-sky-400" />
                         <span>Token Sesi</span>
                       </span>
-                      <span className="font-mono text-[10px] truncate max-w-[140px] text-zinc-400">
+                      <span className="font-mono text-[10px] truncate max-w-[140px] text-slate-400">
                         {activeSession?.token || 'diafera_active'}
                       </span>
                     </div>
@@ -3781,9 +3877,9 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 <div className="flex items-center gap-2">
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-full bg-lime-300 hover:bg-lime-200 text-zinc-950 font-bold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-lg bg-slate-100 hover:bg-white text-slate-950 font-semibold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
                   >
-                    <Check className="w-4 h-4" />
+                    <Check className="w-4 h-4 stroke-[2.5]" />
                     <span>Simpan Perubahan Profil & Keamanan</span>
                   </button>
                 </div>
@@ -3796,27 +3892,28 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
       {/* ================= MODAL: ADD TASK ================= */}
       {showAddTaskModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className={`p-6 rounded-3xl border w-full max-w-md space-y-4 ${cardBg}`}>
-            <h3 className="font-bold text-base">Tambah Studio To-Do</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="p-5 sm:p-6 rounded-xl border border-neutral-800 bg-[#0c0c0c] text-white w-full max-w-md space-y-4">
+            <h3 className="font-bold text-base text-white tracking-wide">Tambah Studio To-Do</h3>
             <form onSubmit={handleAddNewTask} className="space-y-3 text-xs">
               <div>
-                <label className="block mb-1 font-medium">Judul Pekerjaan</label>
+                <label className="block mb-1 font-semibold text-neutral-300">Judul Pekerjaan *</label>
                 <input
                   type="text"
+                  required
                   placeholder="Misal: Siapkan softbox 120cm..."
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                   autoFocus
                 />
               </div>
               <div>
-                <label className="block mb-1 font-medium">Kategori</label>
+                <label className="block mb-1 font-semibold text-neutral-300">Kategori</label>
                 <select
                   value={newTaskCategory}
                   onChange={(e) => setNewTaskCategory(e.target.value as any)}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                 >
                   <option value="editing">Editing & Retouching</option>
                   <option value="gear">Gear & Lighting Prep</option>
@@ -3824,17 +3921,17 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   <option value="client">Client Brief & Wardrobe</option>
                 </select>
               </div>
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex justify-end gap-2 pt-3 border-t border-neutral-800">
                 <button
                   type="button"
                   onClick={() => setShowAddTaskModal(false)}
-                  className="px-4 py-2 rounded-full border border-zinc-300 dark:border-white/10"
+                  className="px-3.5 py-1.5 rounded-lg border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs font-medium cursor-pointer transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-lime-300 text-zinc-950 font-bold"
+                  className="px-4 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs transition-colors cursor-pointer"
                 >
                   Simpan Task
                 </button>
@@ -3846,11 +3943,15 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
       {/* ================= MODAL: MANUAL WALK-IN BOOKING ================= */}
       {manualBookingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
-          <div className={`p-6 rounded-3xl border w-full max-w-lg space-y-4 my-8 ${cardBg}`}>
-            <div className="flex justify-between items-center border-b pb-3 border-zinc-200 dark:border-white/10">
-              <h3 className="font-bold text-base">+ Tambah Booking Manual / Walk-in</h3>
-              <button onClick={() => setManualBookingModalOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+          <div className="p-5 sm:p-6 rounded-xl border border-neutral-800 bg-[#0c0c0c] text-white w-full max-w-lg space-y-4 my-8">
+            <div className="flex justify-between items-center border-b pb-3 border-neutral-800">
+              <h3 className="font-bold text-base text-white tracking-wide">+ Tambah Booking Manual / Walk-in</h3>
+              <button
+                type="button"
+                onClick={() => setManualBookingModalOpen(false)}
+                className="text-neutral-400 hover:text-white cursor-pointer"
+              >
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
@@ -3858,36 +3959,36 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
             <form onSubmit={handleSaveManualBooking} className="space-y-3.5 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block mb-1 font-medium">Nama Pelanggan *</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Nama Pelanggan *</label>
                   <input
                     type="text"
                     required
                     placeholder="Nama lengkap"
                     value={manualForm.customerName}
                     onChange={(e) => setManualForm({ ...manualForm, customerName: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 font-medium">Nomor WhatsApp *</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Nomor WhatsApp *</label>
                   <input
                     type="tel"
                     required
                     placeholder="0812xxxx"
                     value={manualForm.customerPhone}
                     onChange={(e) => setManualForm({ ...manualForm, customerPhone: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3 py-1.5 rounded-lg font-mono ${inputBg}`}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block mb-1 font-medium">Pilih Paket Sesi</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Pilih Paket Sesi</label>
                   <select
                     value={manualForm.packageId}
                     onChange={(e) => setManualForm({ ...manualForm, packageId: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                   >
                     {SERVICE_PACKAGES.map((p) => (
                       <option key={p.id} value={p.id}>{p.name} - Rp {p.price.toLocaleString('id-ID')}</option>
@@ -3895,18 +3996,18 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="block mb-1 font-medium">Tanggal</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Tanggal</label>
                   <input
                     type="date"
                     value={manualForm.date}
                     onChange={(e) => setManualForm({ ...manualForm, date: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block mb-1 font-medium">Pilih Slot Jam</label>
+                <label className="block mb-1 font-semibold text-neutral-300">Pilih Slot Jam</label>
                 <select
                   value={manualForm.timeSlotId}
                   onChange={(e) => {
@@ -3917,7 +4018,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                       timeSlot: found ? found.label : `${e.target.value} WIB`,
                     });
                   }}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3 py-1.5 rounded-lg ${inputBg}`}
                 >
                   {adminSlots.map((s) => (
                     <option key={s.id} value={s.time}>{s.label} ({s.status})</option>
@@ -3927,12 +4028,12 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
               {/* Addons Selection (Sangat berguna untuk studio!) */}
               <div>
-                <label className="block mb-1 font-medium">Layanan Tambahan (Add-ons):</label>
-                <div className="space-y-1.5 p-3 rounded-2xl bg-black/5 dark:bg-black/30">
+                <label className="block mb-1 font-semibold text-neutral-300">Layanan Tambahan (Add-ons):</label>
+                <div className="space-y-1.5 p-3 rounded-lg bg-[#121212] border border-neutral-800">
                   {STUDIO_ADDONS.map((addon) => {
                     const isChecked = manualForm.selectedAddons.includes(addon.id);
                     return (
-                      <label key={addon.id} className="flex items-center justify-between cursor-pointer text-xs">
+                      <label key={addon.id} className="flex items-center justify-between cursor-pointer text-xs text-neutral-300 hover:text-white">
                         <div className="flex items-center gap-2">
                           <input
                             type="checkbox"
@@ -3946,7 +4047,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                           />
                           <span>{addon.name}</span>
                         </div>
-                        <span className="font-mono font-medium">+Rp {addon.price.toLocaleString('id-ID')}</span>
+                        <span className="font-mono font-medium text-emerald-400">+Rp {addon.price.toLocaleString('id-ID')}</span>
                       </label>
                     );
                   })}
@@ -3960,22 +4061,22 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   checked={manualForm.isPaidFull}
                   onChange={(e) => setManualForm({ ...manualForm, isPaidFull: e.target.checked })}
                 />
-                <label htmlFor="paidFullCheck" className="cursor-pointer font-medium">
+                <label htmlFor="paidFullCheck" className="cursor-pointer font-medium text-neutral-300">
                   Langsung Bayar Lunas di Studio (100%)
                 </label>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200 dark:border-white/10">
+              <div className="flex justify-end gap-2 pt-3 border-t border-neutral-800">
                 <button
                   type="button"
                   onClick={() => setManualBookingModalOpen(false)}
-                  className="px-4 py-2 rounded-full border"
+                  className="px-3.5 py-1.5 rounded-lg border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs font-medium cursor-pointer transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-lime-300 text-zinc-950 font-bold"
+                  className="px-4 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs transition-colors cursor-pointer"
                 >
                   Simpan & Kunci Slot
                 </button>
@@ -3987,48 +4088,55 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
       {/* ================= MODAL: RECEIPT INVOICE ================= */}
       {receiptBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className={`p-6 rounded-3xl border w-full max-w-md space-y-4 ${cardBg}`}>
-            <div className="flex justify-between items-center border-b pb-3 border-zinc-200 dark:border-white/10">
-              <h3 className="font-bold text-base">Invoice #{receiptBooking.id}</h3>
-              <button onClick={() => setReceiptBooking(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="p-5 sm:p-6 rounded-xl border border-neutral-800 bg-[#0c0c0c] text-white w-full max-w-md space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b pb-3 border-neutral-800">
+              <div className="flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-emerald-400" />
+                <h3 className="font-bold text-sm tracking-wide">Invoice Resmi #{receiptBooking.id}</h3>
+              </div>
+              <button 
+                onClick={() => setReceiptBooking(null)}
+                className="p-1 rounded-md text-neutral-400 hover:text-white cursor-pointer"
+              >
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className={textMuted}>Klien:</span>
-                <span className="font-bold">{receiptBooking.customerName}</span>
+              <div className="flex justify-between py-1 border-b border-neutral-900">
+                <span className="text-neutral-400">Klien:</span>
+                <span className="font-bold text-white">{receiptBooking.customerName}</span>
               </div>
-              <div className="flex justify-between">
-                <span className={textMuted}>WhatsApp:</span>
-                <span className="font-mono">{receiptBooking.customerPhone}</span>
+              <div className="flex justify-between py-1 border-b border-neutral-900">
+                <span className="text-neutral-400">WhatsApp:</span>
+                <span className="font-mono text-neutral-200">{receiptBooking.customerPhone}</span>
               </div>
-              <div className="flex justify-between">
-                <span className={textMuted}>Layanan:</span>
-                <span className="font-medium">{receiptBooking.packageName}</span>
+              <div className="flex justify-between py-1 border-b border-neutral-900">
+                <span className="text-neutral-400">Layanan:</span>
+                <span className="font-medium text-neutral-200">{receiptBooking.packageName}</span>
               </div>
-              <div className="flex justify-between">
-                <span className={textMuted}>Jadwal:</span>
-                <span className="font-medium text-orange-500">{receiptBooking.date} ({receiptBooking.timeSlot})</span>
+              <div className="flex justify-between py-1 border-b border-neutral-900">
+                <span className="text-neutral-400">Jadwal:</span>
+                <span className="font-medium text-amber-400">{receiptBooking.date} ({receiptBooking.timeSlot})</span>
               </div>
-              <div className="flex justify-between pt-2 border-t font-mono">
-                <span>Total Biaya:</span>
-                <span className="font-bold">Rp {receiptBooking.totalPrice.toLocaleString('id-ID')}</span>
+              <div className="flex justify-between py-1 border-b border-neutral-900 font-mono">
+                <span className="text-neutral-400">Total Biaya:</span>
+                <span className="font-bold text-white">Rp {receiptBooking.totalPrice.toLocaleString('id-ID')}</span>
               </div>
-              <div className="flex justify-between font-mono">
-                <span>Status Bayar:</span>
-                <span className="font-bold text-emerald-500">
+              <div className="flex justify-between py-1 font-mono">
+                <span className="text-neutral-400">Status Bayar:</span>
+                <span className="font-bold text-emerald-400">
                   {receiptBooking.paymentStatus === 'PAID_FULL' ? 'LUNAS (100%)' : `DP (Rp ${receiptBooking.dpAmount.toLocaleString('id-ID')})`}
                 </span>
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-3 border-t border-neutral-800">
               <button
                 onClick={() => window.print()}
-                className="px-4 py-2 rounded-full bg-zinc-900 text-white dark:bg-white dark:text-zinc-950 font-bold text-xs"
+                className="px-4 py-2 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
               >
-                Cetak Dokumen
+                <Printer className="w-3.5 h-3.5" />
+                <span>Cetak Dokumen</span>
               </button>
             </div>
           </div>
@@ -4037,31 +4145,46 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
       {/* ================= MODAL: REJECT ================= */}
       {rejectModalBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className={`p-6 rounded-3xl border w-full max-w-md space-y-4 ${cardBg}`}>
-            <h3 className="font-bold text-base text-rose-500">Tolak Booking #{rejectModalBooking.id}</h3>
-            <p className="text-xs">Klien: {rejectModalBooking.customerName} ({rejectModalBooking.date})</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="p-5 sm:p-6 rounded-xl border border-rose-900/40 bg-[#0c0c0c] text-white w-full max-w-md space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b pb-3 border-neutral-800">
+              <h3 className="font-bold text-sm text-rose-400 flex items-center gap-2">
+                <XCircle className="w-4 h-4 text-rose-500" />
+                <span>Tolak Booking #{rejectModalBooking.id}</span>
+              </h3>
+              <button
+                onClick={() => setRejectModalBooking(null)}
+                className="p-1 rounded-md text-neutral-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-xs text-neutral-300">
+              Klien: <strong className="text-white">{rejectModalBooking.customerName}</strong> ({rejectModalBooking.date})
+            </p>
             <div>
-              <label className="text-xs font-medium block mb-1">Alasan Penolakan:</label>
+              <label className="text-xs font-semibold block mb-1 text-neutral-300">Alasan Penolakan:</label>
               <textarea
                 rows={3}
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                className={`w-full p-3 rounded-xl text-xs ${inputBg}`}
+                placeholder="Tulis alasan penolakan untuk dikirim ke klien..."
+                className={`w-full p-3 rounded-lg text-xs resize-none ${inputBg}`}
               />
             </div>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2 pt-3 border-t border-neutral-800">
               <button
                 onClick={() => setRejectModalBooking(null)}
-                className="px-4 py-2 rounded-full border text-xs"
+                className="px-3.5 py-1.5 rounded-lg border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs font-medium cursor-pointer transition-colors"
               >
                 Batal
               </button>
               <button
                 onClick={handleConfirmReject}
-                className="px-4 py-2 rounded-full bg-rose-500 text-white font-bold text-xs"
+                className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-colors cursor-pointer flex items-center gap-1.5"
               >
-                Tolak & Buka WA Klien
+                <XCircle className="w-3.5 h-3.5" />
+                <span>Tolak & Hubungi WA</span>
               </button>
             </div>
           </div>
@@ -4070,34 +4193,37 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
       {/* ================= MODAL: PORTFOLIO CRUD ================= */}
       {portfolioModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
-          <div className={`p-6 rounded-3xl border w-full max-w-lg space-y-4 my-8 ${cardBg}`}>
-            <div className="flex justify-between items-center border-b pb-3 border-zinc-200 dark:border-white/10">
-              <h3 className="font-bold text-base">{editingPortfolioId ? 'Edit Portofolio' : 'Tambah Portofolio'}</h3>
-              <button onClick={() => setPortfolioModalOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+          <div className="p-5 sm:p-6 rounded-xl border border-neutral-800 bg-[#0c0c0c] text-white w-full max-w-lg space-y-4 my-8 shadow-2xl">
+            <div className="flex justify-between items-center border-b pb-3 border-neutral-800">
+              <h3 className="font-bold text-sm tracking-wide">{editingPortfolioId ? 'Edit Portofolio' : 'Tambah Portofolio'}</h3>
+              <button 
+                onClick={() => setPortfolioModalOpen(false)}
+                className="p-1 rounded-md text-neutral-400 hover:text-white cursor-pointer"
+              >
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSavePortfolio} className="space-y-3 text-xs">
+            <form onSubmit={handleSavePortfolio} className="space-y-3.5 text-xs">
               <div>
-                <label className="block mb-1 font-medium">Judul Karya *</label>
+                <label className="block mb-1 font-semibold text-neutral-300">Judul Karya *</label>
                 <input
                   type="text"
                   required
                   value={portfolioFormData.title}
                   onChange={(e) => setPortfolioFormData({ ...portfolioFormData, title: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                 />
               </div>
 
               {/* Image URL Input & Live Preview (Instagram / Cloud / Web link) */}
-              <div className="space-y-1.5 p-3 rounded-2xl bg-black/5 dark:bg-white/[0.03] border border-zinc-200 dark:border-white/10">
+              <div className="space-y-2 p-3 rounded-xl bg-[#121212] border border-neutral-800">
                 <div className="flex items-center justify-between">
-                  <label className="block font-semibold text-xs">
+                  <label className="block font-semibold text-xs text-neutral-200">
                     Link Foto / URL Gambar (Bisa dari Instagram / Cloud / Web) *
                   </label>
-                  <span className="text-[10px] text-zinc-500 font-mono">JPG / PNG / WebP</span>
+                  <span className="text-[10px] text-neutral-400 font-mono">JPG / PNG / WebP</span>
                 </div>
                 
                 <input
@@ -4106,13 +4232,13 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   placeholder="https://... tempel link foto dari Instagram atau web di sini"
                   value={portfolioFormData.imageUrl}
                   onChange={(e) => setPortfolioFormData({ ...portfolioFormData, imageUrl: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl font-mono text-xs ${inputBg}`}
+                  className={`w-full px-3.5 py-2 rounded-lg font-mono text-xs ${inputBg}`}
                 />
 
                 {/* Live Preview Box */}
                 {portfolioFormData.imageUrl && (
-                  <div className="flex items-center gap-3 pt-2">
-                    <div className="w-16 h-12 rounded-lg overflow-hidden border border-zinc-200 dark:border-white/10 shrink-0 bg-black">
+                  <div className="flex items-center gap-3 pt-1">
+                    <div className="w-16 h-12 rounded-lg overflow-hidden border border-neutral-800 shrink-0 bg-black">
                       <img
                         src={portfolioFormData.imageUrl}
                         alt="Preview"
@@ -4122,7 +4248,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                         }}
                       />
                     </div>
-                    <div className="text-[11px] text-zinc-400">
+                    <div className="text-[11px] text-neutral-400">
                       <p className="font-semibold text-white">Live Preview Foto</p>
                       <p className="text-[10px] truncate max-w-xs">{portfolioFormData.imageUrl}</p>
                     </div>
@@ -4130,8 +4256,8 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 )}
 
                 {/* Quick Presets */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1.5 text-[10px]">
-                  <span className="text-zinc-500">Preset contoh:</span>
+                <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[10px]">
+                  <span className="text-neutral-400">Preset contoh:</span>
                   {[
                     { name: 'Wisuda', url: WISUDA_PORTFOLIO_IMAGE },
                     { name: 'Pernikahan', url: PERNIKAHAN_PORTFOLIO_IMAGE },
@@ -4142,7 +4268,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                       key={preset.name}
                       type="button"
                       onClick={() => setPortfolioFormData({ ...portfolioFormData, imageUrl: preset.url })}
-                      className="px-2 py-0.5 rounded-md bg-zinc-200 dark:bg-white/10 text-zinc-700 dark:text-zinc-300 hover:text-white"
+                      className="px-2 py-0.5 rounded-md bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white transition-colors cursor-pointer"
                     >
                       {preset.name}
                     </button>
@@ -4152,11 +4278,11 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block mb-1 font-medium">Kategori</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Kategori</label>
                   <select
                     value={portfolioFormData.category}
                     onChange={(e) => setPortfolioFormData({ ...portfolioFormData, category: e.target.value as any })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                   >
                     <option value="wisuda">Wisuda / Graduation</option>
                     <option value="family">Family Session</option>
@@ -4168,29 +4294,29 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   </select>
                 </div>
                 <div>
-                  <label className="block mb-1 font-medium">Klien / Subjek</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Klien / Subjek</label>
                   <input
                     type="text"
                     value={portfolioFormData.clientName}
                     onChange={(e) => setPortfolioFormData({ ...portfolioFormData, clientName: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block mb-1 font-medium">Deskripsi</label>
+                <label className="block mb-1 font-semibold text-neutral-300">Deskripsi</label>
                 <textarea
                   rows={2}
                   value={portfolioFormData.description}
                   onChange={(e) => setPortfolioFormData({ ...portfolioFormData, description: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3.5 py-2 rounded-lg resize-none ${inputBg}`}
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 <div>
-                  <label className="text-[10px] text-zinc-400 block mb-0.5">Kamera</label>
+                  <label className="text-[10px] text-neutral-400 block mb-0.5">Kamera</label>
                   <input
                     type="text"
                     value={portfolioFormData.camera}
@@ -4199,7 +4325,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-zinc-400 block mb-0.5">Lensa</label>
+                  <label className="text-[10px] text-neutral-400 block mb-0.5">Lensa</label>
                   <input
                     type="text"
                     value={portfolioFormData.lens}
@@ -4208,7 +4334,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-zinc-400 block mb-0.5">Lighting</label>
+                  <label className="text-[10px] text-neutral-400 block mb-0.5">Lighting</label>
                   <input
                     type="text"
                     value={portfolioFormData.lighting}
@@ -4218,17 +4344,17 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200 dark:border-white/10">
+              <div className="flex justify-end gap-2 pt-3 border-t border-neutral-800">
                 <button
                   type="button"
                   onClick={() => setPortfolioModalOpen(false)}
-                  className="px-4 py-2 rounded-full border"
+                  className="px-3.5 py-1.5 rounded-lg border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs font-medium cursor-pointer transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-lime-300 text-zinc-950 font-bold"
+                  className="px-4 py-1.5 rounded-lg bg-white hover:bg-neutral-200 text-black font-semibold text-xs transition-colors cursor-pointer"
                 >
                   Simpan Karya
                 </button>
@@ -4241,16 +4367,16 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
       {/* ================= MODAL: QUICK PHOTO LINK CHANGE (1-KLIK INSTAGRAM / WEB URL) ================= */}
       {quickPhotoItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className={`p-6 rounded-3xl border w-full max-w-md space-y-4 ${cardBg} shadow-2xl`}>
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-white/10">
+          <div className={`p-6 rounded-xl border w-full max-w-md space-y-4 ${cardBg} shadow-2xl`}>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
               <div className="flex items-center gap-2">
-                <ImageIcon className="w-4 h-4 text-lime-400" />
-                <h3 className="font-bold text-sm">Ganti Link Foto Portofolio</h3>
+                <ImageIcon className="w-4 h-4 text-sky-400" />
+                <h3 className="font-bold text-sm text-slate-100">Ganti Link Foto Portofolio</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setQuickPhotoItem(null)}
-                className="p-1 rounded-full text-zinc-400 hover:text-white cursor-pointer"
+                className="p-1 rounded-md text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -4258,12 +4384,12 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
             <form onSubmit={handleSaveQuickPhoto} className="space-y-4 text-xs">
               <div>
-                <p className="font-bold text-sm text-zinc-900 dark:text-white truncate">{quickPhotoItem.title}</p>
+                <p className="font-bold text-sm text-slate-100 truncate">{quickPhotoItem.title}</p>
                 <p className={`text-[11px] ${textMuted}`}>Kategori: {quickPhotoItem.category}</p>
               </div>
 
               {/* Image Preview */}
-              <div className="aspect-[16/10] rounded-2xl overflow-hidden border border-zinc-200 dark:border-white/10 bg-black relative">
+              <div className="aspect-[16/10] rounded-lg overflow-hidden border border-slate-800 bg-black relative">
                 <img
                   src={quickPhotoUrl || quickPhotoItem.imageUrl}
                   alt="Preview"
@@ -4275,7 +4401,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               </div>
 
               <div className="space-y-1">
-                <label className="font-semibold block">
+                <label className="font-semibold block text-slate-300">
                   Tempel URL Gambar / Link Foto Instagram:
                 </label>
                 <input
@@ -4284,7 +4410,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                   placeholder="https://... masukkan link foto dari Instagram atau web"
                   value={quickPhotoUrl}
                   onChange={(e) => setQuickPhotoUrl(e.target.value)}
-                  className={`w-full px-3.5 py-2.5 rounded-xl font-mono ${inputBg}`}
+                  className={`w-full px-3.5 py-2.5 rounded-lg font-mono ${inputBg}`}
                   autoFocus
                 />
                 <p className={`text-[10px] ${textMuted}`}>
@@ -4293,7 +4419,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
               </div>
 
               {quickPhotoSuccess && (
-                <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold text-center">
+                <div className="p-3 rounded-lg bg-emerald-950/60 border border-emerald-800/60 text-emerald-300 font-semibold text-center">
                   Foto berhasil diperbarui dan tersimpan!
                 </div>
               )}
@@ -4302,13 +4428,13 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 <button
                   type="button"
                   onClick={() => setQuickPhotoItem(null)}
-                  className="px-4 py-2 rounded-full border text-xs cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white text-xs font-medium cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-lime-300 hover:bg-lime-200 text-zinc-950 font-bold text-xs shadow-sm cursor-pointer"
+                  className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-white text-slate-950 font-semibold text-xs shadow-sm transition-colors cursor-pointer"
                 >
                   Simpan & Tampilkan
                 </button>
@@ -4321,33 +4447,33 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
       {/* ================= MODAL: ADD STUDIO GEAR ================= */}
       {showAddGearModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className={`p-6 rounded-3xl border w-full max-w-md space-y-4 ${cardBg}`}>
-            <h3 className="font-bold text-base flex items-center gap-2">
-              <Wrench className="w-4 h-4 text-lime-500" />
+          <div className={`p-6 rounded-xl border w-full max-w-md space-y-4 ${cardBg}`}>
+            <h3 className="font-bold text-base flex items-center gap-2 text-slate-100">
+              <Wrench className="w-4 h-4 text-sky-400" />
               <span>Tambah Alat / Gear Studio</span>
             </h3>
 
             <form onSubmit={handleAddNewGear} className="space-y-3 text-xs">
               <div>
-                <label className="block mb-1 font-semibold">Nama Alat / Lensa / Strobo *</label>
+                <label className="block mb-1 font-semibold text-slate-300">Nama Alat / Lensa / Strobo *</label>
                 <input
                   type="text"
                   required
                   placeholder="Misal: Profoto B10X Plus TTL..."
                   value={newGearForm.name}
                   onChange={(e) => setNewGearForm({ ...newGearForm, name: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                   autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block mb-1 font-semibold">Kategori</label>
+                  <label className="block mb-1 font-semibold text-slate-300">Kategori</label>
                   <select
                     value={newGearForm.category}
                     onChange={(e) => setNewGearForm({ ...newGearForm, category: e.target.value as any })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                   >
                     <option value="camera">Kamera</option>
                     <option value="lens">Lensa</option>
@@ -4359,11 +4485,11 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 </div>
 
                 <div>
-                  <label className="block mb-1 font-semibold">Status Awal</label>
+                  <label className="block mb-1 font-semibold text-slate-300">Status Awal</label>
                   <select
                     value={newGearForm.status}
                     onChange={(e) => setNewGearForm({ ...newGearForm, status: e.target.value as any })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                   >
                     <option value="ready">Ready (Siap Pakai)</option>
                     <option value="in_use">In-Use (Dipakai)</option>
@@ -4375,64 +4501,64 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block mb-1 font-semibold">Serial Number</label>
+                  <label className="block mb-1 font-semibold text-slate-300">Serial Number</label>
                   <input
                     type="text"
                     placeholder="SN-XXXX"
                     value={newGearForm.serialNumber}
                     onChange={(e) => setNewGearForm({ ...newGearForm, serialNumber: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl font-mono ${inputBg}`}
+                    className={`w-full px-3.5 py-2 rounded-lg font-mono ${inputBg}`}
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-1 font-semibold">Lokasi Simpan</label>
+                  <label className="block mb-1 font-semibold text-slate-300">Lokasi Simpan</label>
                   <input
                     type="text"
                     placeholder="Dry Cabinet A1 / Set 1"
                     value={newGearForm.location}
                     onChange={(e) => setNewGearForm({ ...newGearForm, location: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                   />
                 </div>
               </div>
 
               {(newGearForm.category === 'camera' || newGearForm.category === 'lighting') && (
                 <div>
-                  <label className="block mb-1 font-semibold">Level Baterai ({newGearForm.batteryLevel}%)</label>
+                  <label className="block mb-1 font-semibold text-slate-300">Level Baterai ({newGearForm.batteryLevel}%)</label>
                   <input
                     type="range"
                     min="0"
                     max="100"
                     value={newGearForm.batteryLevel}
                     onChange={(e) => setNewGearForm({ ...newGearForm, batteryLevel: Number(e.target.value) })}
-                    className="w-full accent-lime-400"
+                    className="w-full accent-sky-500"
                   />
                 </div>
               )}
 
               <div>
-                <label className="block mb-1 font-semibold">Catatan Kondisi</label>
+                <label className="block mb-1 font-semibold text-slate-300">Catatan Kondisi</label>
                 <input
                   type="text"
                   placeholder="Kondisi optik, kelengkapan kabel, dll"
                   value={newGearForm.notes}
                   onChange={(e) => setNewGearForm({ ...newGearForm, notes: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200 dark:border-white/10">
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800/80">
                 <button
                   type="button"
                   onClick={() => setShowAddGearModal(false)}
-                  className="px-4 py-2 rounded-full border border-zinc-300 dark:border-white/10 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white text-xs font-medium cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-lime-300 text-zinc-950 font-bold cursor-pointer"
+                  className="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-white text-slate-950 font-semibold text-xs shadow-sm transition-colors cursor-pointer"
                 >
                   Simpan Gear
                 </button>
@@ -4444,34 +4570,42 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
 
       {/* ================= MODAL: ADD STUDIO EXPENSE ================= */}
       {showAddExpenseModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className={`p-6 rounded-3xl border w-full max-w-md space-y-4 ${cardBg}`}>
-            <h3 className="font-bold text-base flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-rose-500" />
-              <span>Catat Pengeluaran Kas Studio</span>
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+          <div className="p-5 sm:p-6 rounded-xl border border-neutral-800 bg-[#0c0c0c] text-white w-full max-w-md space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b pb-3 border-neutral-800">
+              <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-rose-400" />
+                <span>Catat Pengeluaran Kas Studio</span>
+              </h3>
+              <button 
+                onClick={() => setShowAddExpenseModal(false)}
+                className="p-1 rounded-md text-neutral-400 hover:text-white cursor-pointer"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
 
-            <form onSubmit={handleAddNewExpense} className="space-y-3 text-xs">
+            <form onSubmit={handleAddNewExpense} className="space-y-3.5 text-xs">
               <div>
-                <label className="block mb-1 font-semibold">Deskripsi Pengeluaran *</label>
+                <label className="block mb-1 font-semibold text-neutral-300">Deskripsi Pengeluaran *</label>
                 <input
                   type="text"
                   required
                   placeholder="Misal: Honor Retoucher freelance, cetak canvas..."
                   value={newExpenseForm.title}
                   onChange={(e) => setNewExpenseForm({ ...newExpenseForm, title: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                   autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block mb-1 font-semibold">Kategori</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Kategori</label>
                   <select
                     value={newExpenseForm.category}
                     onChange={(e) => setNewExpenseForm({ ...newExpenseForm, category: e.target.value as any })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                   >
                     <option value="freelance">Honor Tim / Freelance</option>
                     <option value="equipment">Alat & Maintenance</option>
@@ -4482,7 +4616,7 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                 </div>
 
                 <div>
-                  <label className="block mb-1 font-semibold">Nominal (Rp) *</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Nominal (Rp) *</label>
                   <input
                     type="number"
                     required
@@ -4490,55 +4624,55 @@ export const AdminBentoDashboard: React.FC<AdminBentoDashboardProps> = ({
                     step="5000"
                     value={newExpenseForm.amount}
                     onChange={(e) => setNewExpenseForm({ ...newExpenseForm, amount: Number(e.target.value) })}
-                    className={`w-full px-3.5 py-2 rounded-xl font-mono ${inputBg}`}
+                    className={`w-full px-3.5 py-2 rounded-lg font-mono ${inputBg}`}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block mb-1 font-semibold">Tanggal</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Tanggal</label>
                   <input
                     type="date"
                     value={newExpenseForm.date}
                     onChange={(e) => setNewExpenseForm({ ...newExpenseForm, date: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                   />
                 </div>
 
                 <div>
-                  <label className="block mb-1 font-semibold">Dibayar Oleh</label>
+                  <label className="block mb-1 font-semibold text-neutral-300">Dibayar Oleh</label>
                   <input
                     type="text"
                     value={newExpenseForm.paidBy}
                     onChange={(e) => setNewExpenseForm({ ...newExpenseForm, paidBy: e.target.value })}
-                    className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                    className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block mb-1 font-semibold">Catatan / Bukti Bon</label>
+                <label className="block mb-1 font-semibold text-neutral-300">Catatan / Bukti Bon</label>
                 <input
                   type="text"
                   placeholder="No invoice vendor / keterangan tambahan..."
                   value={newExpenseForm.notes}
                   onChange={(e) => setNewExpenseForm({ ...newExpenseForm, notes: e.target.value })}
-                  className={`w-full px-3.5 py-2 rounded-xl ${inputBg}`}
+                  className={`w-full px-3.5 py-2 rounded-lg ${inputBg}`}
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-200 dark:border-white/10">
+              <div className="flex justify-end gap-2 pt-3 border-t border-neutral-800">
                 <button
                   type="button"
                   onClick={() => setShowAddExpenseModal(false)}
-                  className="px-4 py-2 rounded-full border border-zinc-300 dark:border-white/10 cursor-pointer"
+                  className="px-3.5 py-1.5 rounded-lg border border-neutral-800 bg-[#141414] hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs font-medium cursor-pointer transition-colors"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-full bg-rose-500 hover:bg-rose-400 text-white font-bold cursor-pointer"
+                  className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-colors cursor-pointer"
                 >
                   Simpan Pengeluaran
                 </button>
